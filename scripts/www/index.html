@@ -1,0 +1,1927 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>瑞泽净化 · 全国业绩地图管理系统</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', 'PingFang SC', 'Roboto', sans-serif; background: #e8f0f5; padding: 16px; }
+        .app-container { max-width: 1600px; margin: 0 auto; background: white; border-radius: 32px; box-shadow: 0 20px 40px rgba(0,0,0,0.1); overflow: hidden; }
+        .header { background: linear-gradient(135deg, #0a4c6e 0%, #0b5a7a 100%); padding: 20px 32px; color: white; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; }
+        .header h1 { font-size: 1.6rem; display: flex; align-items: center; gap: 12px; }
+        .admin-btn { background: rgba(255,255,255,0.2); border: 1px solid rgba(255,255,255,0.3); padding: 8px 20px; border-radius: 40px; cursor: pointer; font-size: 0.9rem; transition: all 0.2s; }
+        .admin-btn:hover { background: rgba(255,255,255,0.3); transform: translateY(-1px); }
+        .admin-status { font-size: 0.75rem; background: rgba(255,255,255,0.15); padding: 4px 12px; border-radius: 20px; margin-left: 12px; }
+        .logout-btn { background: rgba(255,255,255,0.15); border: none; padding: 4px 12px; border-radius: 20px; cursor: pointer; margin-left: 8px; font-size: 0.7rem; color: #ffd966; }
+        .logout-btn:hover { background: rgba(255,255,255,0.25); }
+        .product-categories { background: #f4f9fe; padding: 12px 28px; border-bottom: 1px solid #dce5ec; display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
+        .cat-label { font-weight: 600; color: #1e5a7a; }
+        .cat-btn { background: white; border: 1px solid #cde0ea; padding: 6px 18px; border-radius: 40px; font-size: 0.8rem; cursor: pointer; transition: all 0.2s; }
+        .cat-btn.active { background: #0b5a7a; border-color: #0b5a7a; color: white; }
+        .dashboard { display: flex; flex-wrap: wrap; padding: 24px; gap: 24px; }
+        .map-area { flex: 2; min-width: 400px; background: #f5f7fa; border-radius: 24px; overflow: hidden; }
+        #baiduMap { width: 100%; height: 550px; }
+        .info-area { flex: 1.5; min-width: 350px; display: flex; flex-direction: column; gap: 20px; }
+        .detail-card { background: white; border-radius: 24px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); padding: 20px; flex: 1; overflow-y: auto; max-height: 550px; }
+        .detail-header { border-bottom: 2px solid #e3eef5; padding-bottom: 12px; margin-bottom: 16px; display: flex; justify-content: space-between; align-items: center; }
+        .province-title { font-size: 1.5rem; font-weight: 700; color: #0a4c6e; margin: 8px 0; display: flex; align-items: center; gap: 12px; }
+        .back-btn { background: #eef2fa; border: none; padding: 6px 14px; border-radius: 40px; cursor: pointer; font-size: 0.8rem; }
+        .metric-row { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px dashed #e9f0f5; }
+        .detail-table { width: 100%; border-collapse: collapse; margin-top: 12px; font-size: 0.8rem; }
+        .detail-table th, .detail-table td { border: 1px solid #e2edf2; padding: 8px 10px; text-align: left; vertical-align: top; }
+        .detail-table th { background: #f4f9fe; }
+        .image-gallery { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px; align-items: center; }
+        .gallery-img { width: 48px; height: 48px; object-fit: cover; border-radius: 6px; cursor: pointer; border: 1px solid #ccc; background: #f5f5f5; }
+        .modal-image-view { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 2000; display: flex; justify-content: center; align-items: center; cursor: pointer; }
+        .modal-image-view img { max-width: 90%; max-height: 90%; border-radius: 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        .upload-btn-sm { background: #eef2fa; border: 1px solid #cde0ea; border-radius: 20px; padding: 4px 8px; font-size: 0.7rem; cursor: pointer; margin-top: 4px; display: inline-block; transition: 0.2s; }
+        .upload-btn-sm:hover { background: #dce5ec; }
+        .no-img-placeholder { color: #aaa; font-size: 0.7rem; font-style: italic; }
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 1000; justify-content: center; align-items: center; backdrop-filter: blur(4px); }
+        .modal.active { display: flex; }
+        .modal-content { background: white; border-radius: 32px; width: 90%; max-width: 1200px; max-height: 85vh; overflow-y: auto; padding: 28px; box-shadow: 0 25px 50px rgba(0,0,0,0.3); }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; padding-bottom: 16px; border-bottom: 2px solid #e3eef5; }
+        .modal-header h2 { color: #0a4c6e; }
+        .close-modal { font-size: 1.8rem; cursor: pointer; color: #999; transition: color 0.2s; }
+        .close-modal:hover { color: #333; }
+        .form-group { margin-bottom: 20px; }
+        .form-group label { display: block; margin-bottom: 6px; font-weight: 600; color: #1e5a7a; }
+        .form-group input, .form-group select { width: 100%; padding: 10px 14px; border: 1px solid #cde0ea; border-radius: 24px; font-size: 0.9rem; }
+        .form-group input:focus, .form-group select:focus { outline: none; border-color: #0b5a7a; box-shadow: 0 0 0 2px rgba(11,90,122,0.2); }
+        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+        .btn-submit { background: #0b5a7a; color: white; border: none; padding: 12px 24px; border-radius: 40px; cursor: pointer; width: 100%; margin-top: 16px; font-size: 1rem; transition: all 0.2s; }
+        .btn-submit:hover { background: #0a4c6e; transform: translateY(-1px); }
+        .btn-danger { background: #c0392b; }
+        .btn-danger:hover { background: #a93226; }
+        .btn-success { background: #27ae60; }
+        .btn-success:hover { background: #219a52; }
+        .data-table { width: 100%; border-collapse: collapse; margin-top: 20px; font-size: 0.8rem; }
+        .data-table th, .data-table td { border: 1px solid #e2edf2; padding: 8px 12px; text-align: left; vertical-align: top; }
+        .data-table th { background: #f4f9fe; position: sticky; top: 0; }
+        .action-btn { background: none; border: none; cursor: pointer; margin: 0 4px; font-size: 1rem; transition: opacity 0.2s; }
+        .action-btn:hover { opacity: 0.7; }
+        .edit-btn { color: #f39c12; }
+        .delete-btn { color: #e74c3c; }
+        .tab-buttons { display: flex; gap: 12px; margin-bottom: 20px; border-bottom: 1px solid #e2edf2; padding-bottom: 12px; flex-wrap: wrap; }
+        .tab-btn { background: none; border: none; padding: 8px 20px; cursor: pointer; font-size: 0.9rem; border-radius: 40px; transition: all 0.2s; }
+        .tab-btn:hover { background: #eef2fa; }
+        .tab-btn.active { background: #0b5a7a; color: white; }
+        .search-box { margin-bottom: 20px; display: flex; gap: 12px; flex-wrap: wrap; align-items: center; }
+        .search-box input, .search-box select { flex: 1; padding: 10px 14px; border: 1px solid #cde0ea; border-radius: 40px; font-size: 0.85rem; min-width: 150px; }
+        .search-box button { padding: 10px 20px; background: #0b5a7a; color: white; border: none; border-radius: 40px; cursor: pointer; transition: all 0.2s; }
+        .search-box button:hover { background: #0a4c6e; transform: translateY(-1px); }
+        .no-data { text-align: center; padding: 40px; color: #999; }
+        .search-result-count { font-size: 0.75rem; color: #5f8aa8; margin-bottom: 10px; padding: 8px 12px; background: #f8f9fa; border-radius: 20px; display: inline-block; }
+        @media (max-width: 800px) {
+            #baiduMap { height: 400px; }
+            .form-row { grid-template-columns: 1fr; }
+            .dashboard { flex-direction: column; }
+            .map-area, .info-area { min-width: auto; }
+        }
+    </style>
+    <script type="text/javascript" src="https://api.map.baidu.com/api?v=3.0&ak=M5Jc5OiXavu61RpvSVt1NsC7aju1uI7a"></script>
+</head>
+<body>
+<div class="app-container">
+    <div class="header">
+        <h1><i class="fas fa-industry"></i> 瑞泽净化 · 全国业绩地图管理系统</h1>
+        <div>
+            <button class="admin-btn" id="adminBtn" onclick="toggleAdminMode()">
+                <i class="fas fa-user-shield"></i> <span id="adminBtnText">管理员后台</span>
+            </button>
+            <span id="adminStatusBadge" style="display:none;" class="admin-status">👑 管理员模式</span>
+        </div>
+    </div>
+
+    <div class="product-categories" id="categoryContainer">
+        <span class="cat-label"><i class="fas fa-filter"></i> 产品系列：</span>
+    </div>
+
+    <div class="dashboard">
+        <div class="map-area"><div id="baiduMap"><div class="map-loading" style="display:flex;justify-content:center;align-items:center;height:550px;"><i class="fas fa-spinner fa-pulse"></i> 地图加载中...</div></div></div>
+        <div class="info-area">
+            <div class="detail-card">
+                <div class="detail-header"><span><i class="fas fa-map-marker-alt"></i> 区域业绩详情</span><span style="font-size:0.7rem; background:#eef2fa; padding:4px 10px; border-radius:20px;">点击地图标记点查看</span></div>
+                <div id="dynamicDetail"><div style="text-align:center; padding:60px 20px;"><i class="fas fa-tap" style="font-size:3rem;"></i><p style="margin-top:16px;">点击地图上的标记点查看详情</p></div></div>
+            </div>
+            <div class="detail-card">
+                <div class="detail-header"><span><i class="fas fa-chart-pie"></i> 全国业绩概览</span></div>
+                <div id="globalStats">加载中...</div>
+            </div>
+        </div>
+    </div>
+    <footer style="text-align:center; padding:16px; font-size:0.7rem; color:#7b9ab0; border-top:1px solid #e2edf2;">
+        <i class="fas fa-database"></i> 数据自动保存 | 可导出/导入JSON备份 | 支持客户现场图片
+    </footer>
+</div>
+
+<!-- 管理员登录模态框 -->
+<div id="adminLoginModal" class="modal">
+    <div class="modal-content" style="max-width: 400px;">
+        <div class="modal-header"><h2><i class="fas fa-lock"></i> 管理员登录</h2><span class="close-modal" onclick="closeAdminLogin()">&times;</span></div>
+        <div class="login-container" style="text-align:center;">
+            <div class="login-icon"><i class="fas fa-shield-alt"></i></div>
+            <input type="password" id="adminPassword" placeholder="请输入管理员密码" style="width:100%; padding:12px; border-radius:40px; border:1px solid #ccc; margin-bottom:16px;">
+            <button class="btn-submit" onclick="checkAdminLogin()" style="margin-top:0;">登录</button>
+            <div id="loginError" class="error-msg"></div>
+        </div>
+    </div>
+</div>
+
+<!-- 管理员后台模态框 -->
+<div id="adminModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header"><h2><i class="fas fa-user-cog"></i> 管理员后台</h2><span class="close-modal" onclick="closeAdminModal()">&times;</span></div>
+        <div class="tab-buttons">
+            <button class="tab-btn" onclick="switchTab('add')">➕ 添加业绩</button>
+            <button class="tab-btn" onclick="switchTab('edit')">✏️ 编辑/删除</button>
+            <button class="tab-btn" onclick="switchTab('list')">📋 数据列表</button>
+            <button class="tab-btn" onclick="switchTab('dataManage')">📦 数据管理</button>
+            <button class="tab-btn" onclick="switchTab('typeManage')">🏷️ 产品类型管理</button>
+        </div>
+
+        <!-- 添加业绩 -->
+        <div id="addTab" class="tab-content" style="display:block;">
+            <form id="addForm">
+                <div class="form-row">
+                    <div class="form-group"><label>省份 *</label><select id="addProvince" required><option value="">请选择省份</option></select></div>
+                    <div class="form-group"><label>产品类型 *</label><select id="addProductType" required></select></div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group"><label>产品型号/名称 *</label><input type="text" id="addProductName" required placeholder="例: RZ-YA-20C"></div>
+                    <div class="form-group"><label>销售数量 *</label><input type="number" id="addQty" min="1" required placeholder="台套数"></div>
+                </div>
+                <div class="form-group"><label>客户名称</label><input type="text" id="addCompany" placeholder="客户公司名称"></div>
+                <button type="submit" class="btn-submit"><i class="fas fa-plus-circle"></i> 添加业绩记录</button>
+            </form>
+        </div>
+
+        <!-- 编辑删除 -->
+        <div id="editTab" class="tab-content" style="display:none;">
+            <div class="search-box">
+                <input type="text" id="editSearchProvince" placeholder="省份搜索...">
+                <input type="text" id="editSearchProduct" placeholder="产品/客户搜索...">
+                <select id="editSearchType"><option value="">全部类型</option></select>
+                <button onclick="loadEditList()"><i class="fas fa-search"></i> 搜索</button>
+                <button onclick="resetEditSearch()" style="background:#6c757d;"><i class="fas fa-undo"></i> 重置</button>
+            </div>
+            <div id="editList" style="max-height: 500px; overflow-y: auto;"></div>
+        </div>
+
+        <!-- 数据列表 -->
+        <div id="listTab" class="tab-content" style="display:none;">
+            <div class="search-box">
+                <input type="text" id="listSearchInput" placeholder="按省份、客户或产品搜索...">
+                <button onclick="loadDataList()"><i class="fas fa-search"></i> 搜索</button>
+                <button onclick="resetDataList()" style="background:#6c757d;"><i class="fas fa-undo"></i> 重置</button>
+            </div>
+            <div id="searchResultInfo" class="search-result-count"></div>
+            <div id="dataList" style="max-height: 450px; overflow-y: auto;"></div>
+        </div>
+
+        <!-- 数据管理 - 已修复 -->
+        <div id="dataManageTab" class="tab-content" style="display:none;">
+            <div style="background:#d1ecf1; padding:12px; border-radius:16px; margin-bottom:16px;">
+                <i class="fas fa-info-circle"></i> <strong>数据备份与恢复</strong><br>导出JSON备份文件，或导入之前备份的数据（包含图片Base64）
+            </div>
+            <div class="form-row" style="margin-bottom:20px;">
+                <div class="form-group">
+                    <label><i class="fas fa-download"></i> 导出数据</label>
+                    <button class="btn-submit btn-success" onclick="exportToFile()" style="margin-top:0; width:100%;">
+                        <i class="fas fa-download"></i> 导出为JSON文件
+                    </button>
+                    <p style="font-size:0.7rem; margin-top:8px; color:#666;">保存当前所有数据到本地</p>
+                </div>
+                <div class="form-group">
+                    <label><i class="fas fa-upload"></i> 导入数据</label>
+                    <div style="display: flex; gap: 8px;">
+                        <input type="file" id="importFile" accept=".json" style="flex:1; padding:8px; border:1px solid #cde0ea; border-radius:40px;">
+                        <button class="btn-submit" onclick="importFromFile()" style="margin-top:0; width:auto; padding:10px 20px;">
+                            <i class="fas fa-cloud-upload-alt"></i> 导入
+                        </button>
+                    </div>
+                    <p style="font-size:0.7rem; margin-top:8px; color:#666;">选择JSON备份文件恢复数据</p>
+                </div>
+            </div>
+            <div style="border-top: 1px solid #e2edf2; margin: 16px 0;"></div>
+            <div>
+                <label><i class="fas fa-trash-alt"></i> 危险操作</label>
+                <button class="btn-submit btn-danger" onclick="clearAllData()" style="margin-top:8px;">
+                    <i class="fas fa-trash"></i> 清空所有数据
+                </button>
+                <p style="font-size:0.7rem; margin-top:8px; color:#c0392b;">⚠️ 此操作不可撤销，建议先导出备份</p>
+            </div>
+        </div>
+
+        <!-- 产品类型管理 -->
+        <div id="typeManageTab" class="tab-content" style="display:none;">
+            <div class="form-row">
+                <div class="form-group"><label>新类型名称</label><input type="text" id="newTypeName" placeholder="例: 二氧化碳纯化"></div>
+                <div class="form-group"><label>图标</label><input type="text" id="newTypeIcon" placeholder="🔥 或 🧪 (emoji)"></div>
+            </div>
+            <button class="btn-submit" onclick="addProductType()"><i class="fas fa-plus"></i> 添加新类型</button>
+            <div id="typeList" style="margin-top:20px;"></div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // ================= 全局数据 =================
+    let salesDB = {};
+    let productTypes = [];
+    let currentFilter = "all";
+    let currentProvince = "广东省";
+    let map = null;
+    let markers = [];
+
+    // ================= 产品类型管理 =================
+    function loadProductTypes() {
+        const saved = localStorage.getItem('ruize_productTypes');
+        if (saved) {
+            productTypes = JSON.parse(saved);
+        } else {
+             productTypes = [
+                { id: "type_1", name: "氩气纯化", icon: "🟢" },
+                { id: "type_2", name: "氮气纯化", icon: "⚫" },
+                { id: "type_3", name: "氢气纯化", icon: "⚪" },
+                { id: "type_4", name: "氧气纯化", icon: "🔵" },
+                { id: "type_5", name: "氨气纯化", icon: "🟤" },
+                { id: "type_6", name: "氯气纯化", icon: "🟠" },
+                { id: "type_6", name: "氦气纯化", icon: "🔘" },
+                { id: "type_8", name: "二氧化碳纯化", icon: "❄️" },
+                { id: "type_9", name: "混合配气", icon: "⚙️" },
+                { id: "type_10", name: "气体回收提纯", icon: "♻️" },
+                { id: "type_11", name: "特殊气体纯化", icon: "😊" },
+            ];
+            saveProductTypes();
+        }
+        updateTypeSelectors();
+        renderCategoryButtons();
+        renderTypeManageList();
+    }
+
+    function saveProductTypes() {
+        localStorage.setItem('ruize_productTypes', JSON.stringify(productTypes));
+    }
+
+    function updateTypeSelectors() {
+        const addSelect = document.getElementById('addProductType');
+        const editSelect = document.getElementById('editSearchType');
+        const options = productTypes.map(t => `<option value="${t.name}">${t.icon || '📦'} ${t.name}</option>`).join('');
+        if (addSelect) addSelect.innerHTML = options;
+        if (editSelect) editSelect.innerHTML = '<option value="">全部类型</option>' + options;
+    }
+
+    function renderCategoryButtons() {
+        const container = document.getElementById('categoryContainer');
+        if (!container) return;
+        let html = `<span class="cat-label"><i class="fas fa-filter"></i> 产品系列：</span>
+                    <button class="cat-btn active" data-type="all">全部产品</button>`;
+        productTypes.forEach(type => {
+            html += `<button class="cat-btn" data-type="${type.name}">${type.icon || '📦'} ${type.name}</button>`;
+        });
+        container.innerHTML = html;
+        document.querySelectorAll(".cat-btn").forEach(btn => {
+            btn.addEventListener("click", function() {
+                document.querySelectorAll(".cat-btn").forEach(b => b.classList.remove("active"));
+                this.classList.add("active");
+                currentFilter = this.getAttribute("data-type");
+                updateDetailPanel();
+            });
+        });
+    }
+
+    function addProductType() {
+        const newName = document.getElementById('newTypeName').value.trim();
+        if (!newName) { alert("请输入类型名称"); return; }
+        if (productTypes.some(t => t.name === newName)) { alert("该类型已存在"); return; }
+        const icon = document.getElementById('newTypeIcon').value.trim() || "📦";
+        productTypes.push({ id: "t" + Date.now(), name: newName, icon: icon });
+        saveProductTypes();
+        document.getElementById('newTypeName').value = "";
+        document.getElementById('newTypeIcon').value = "";
+        updateTypeSelectors();
+        renderCategoryButtons();
+        renderTypeManageList();
+        alert(`✅ 已添加类型: ${newName}`);
+    }
+
+    function renderTypeManageList() {
+        const container = document.getElementById('typeList');
+        if (!container) return;
+        let html = `<table class="data-table"><thead><tr><th>图标</th><th>类型名称</th><th>操作</th></tr></thead><tbody>`;
+        productTypes.forEach(type => {
+            const safeId = type.name.replace(/\s/g, '_').replace(/[^a-zA-Z0-9_]/g, '');
+            html += `<tr>
+                        <td><input type="text" id="icon_${safeId}" value="${type.icon || '📦'}" style="width:70px;"></td>
+                        <td><input type="text" id="name_${safeId}" value="${type.name}" style="width:140px;"></td>
+                        <td>
+                            <button class="action-btn edit-btn" onclick="updateProductTypeFromUI('${type.name.replace(/'/g, "\\'")}')"><i class="fas fa-save"></i> 保存</button>
+                            <button class="action-btn delete-btn" onclick="deleteProductType('${type.name.replace(/'/g, "\\'")}')"><i class="fas fa-trash"></i> 删除</button>
+                        </td>
+                    </tr>`;
+        });
+        html += `</tbody></table>`;
+        container.innerHTML = html;
+    }
+
+    function updateProductTypeFromUI(oldName) {
+        const safeId = oldName.replace(/\s/g, '_').replace(/[^a-zA-Z0-9_]/g, '');
+        const newName = document.getElementById(`name_${safeId}`).value.trim();
+        const newIcon = document.getElementById(`icon_${safeId}`).value.trim();
+        if (!newName) { alert("类型名称不能为空"); return; }
+        const idx = productTypes.findIndex(t => t.name === oldName);
+        if (idx !== -1) {
+            productTypes[idx].name = newName;
+            if (newIcon) productTypes[idx].icon = newIcon;
+            saveProductTypes();
+            for (let prov in salesDB) {
+                salesDB[prov].details.forEach(d => { if (d.type === oldName) d.type = newName; });
+                rebuildProvinceData(prov);
+            }
+            saveData();
+            updateTypeSelectors();
+            renderCategoryButtons();
+            renderTypeManageList();
+            refreshAll();
+            alert(`✅ 已更新类型: ${oldName} → ${newName}`);
+        }
+    }
+
+    function deleteProductType(typeName) {
+        let hasUsage = false;
+        for (let prov in salesDB) {
+            if (salesDB[prov].details.some(d => d.type === typeName)) {
+                hasUsage = true;
+                break;
+            }
+        }
+        if (hasUsage) {
+            alert(`⚠️ 无法删除：还有业绩记录使用"${typeName}"类型`);
+            return;
+        }
+        if (confirm(`确定删除类型"${typeName}"吗？`)) {
+            productTypes = productTypes.filter(t => t.name !== typeName);
+            saveProductTypes();
+            updateTypeSelectors();
+            renderCategoryButtons();
+            renderTypeManageList();
+            alert(`✅ 已删除类型: ${typeName}`);
+        }
+    }
+
+    function rebuildProvinceData(prov) {
+        if (!salesDB[prov]) return;
+        const prodMap = new Map();
+        const compSet = new Set();
+        salesDB[prov].details.forEach(d => {
+            prodMap.set(d.product, (prodMap.get(d.product) || 0) + d.qty);
+            compSet.add(d.company);
+        });
+        salesDB[prov].products = Array.from(prodMap.entries()).map(([name, qty]) => ({ name, qty }));
+        salesDB[prov].companies = compSet;
+    }
+
+    // ================= 业绩数据操作 =================
+    async function saveData() {
+        const toSave = {};
+        for (let prov in salesDB) {
+            toSave[prov] = {
+                products: salesDB[prov].products,
+                companies: Array.from(salesDB[prov].companies),
+                details: salesDB[prov].details
+            };
+        }
+        localStorage.setItem('ruize_salesDB', JSON.stringify(toSave));
+        console.log("数据已保存，省份数:", Object.keys(salesDB).length);
+    }
+
+    async function loadData() {
+        const saved = localStorage.getItem('ruize_salesDB');
+        if (saved && saved !== '{}') {
+            try {
+                const parsed = JSON.parse(saved);
+                for (let prov in parsed) {
+                    salesDB[prov] = {
+                        products: parsed[prov].products || [],
+                        companies: new Set(parsed[prov].companies || []),
+                        details: parsed[prov].details || []
+                    };
+                }
+                console.log("加载成功，共", Object.keys(salesDB).length, "个省份");
+                return true;
+            } catch(e) { console.error("数据加载失败", e); }
+        }
+        initSampleData();
+        return false;
+    }
+
+    function initSampleData() {
+        salesDB = {};
+        addSaleInternal("广东省", "瑞泽科技（深圳）", "RZ-YA-20C 氩气纯化装置", 2, "氩气纯化", false, []);
+        addSaleInternal("广东省", "华南气体有限公司", "RZ-DYC-20C 氮气纯化装置", 1, "氮气纯化", false, []);
+        addSaleInternal("北京市", "北方气体公司", "RZ-YA-100 氩气纯化装置", 3, "氩气纯化", false, []);
+        addSaleInternal("上海市", "华东电子材料", "RZ-YA-50D/6N 氩气纯化设备", 1, "氩气纯化", false, []);
+        addSaleInternal("江苏省", "江苏制造集团", "RZ-QYC-10C 氢气纯化装置", 2, "氢气纯化", false, []);
+        addSaleInternal("浙江省", "浙江科技公司", "RZ-YYC-20D 氧气纯化设备", 1, "氧气纯化", false, []);
+        addSaleInternal("河北省", "石家庄福利乙炔气厂", "RZ-YA-20C 型氩气纯化装置", 1, "氩气纯化", false, []);
+        addSaleInternal("河北省", "珈伟光伏材料（三河）有限公司", "RZ-YA-100 氩气纯化装置", 1, "氩气纯化", false, []);
+        addSaleInternal("河北省", "张廷坤邯郸气体公司", "RZ-YA-20C 型氩气纯化装置", 1, "氩气纯化", false, []);
+        addSaleInternal("河北省", "张廷坤邯郸气体公司", "RZ-DYC-20C 型氮气纯化装置", 1, "氮气纯化", false, []);
+        addSaleInternal("河北省", "邯郸市裕方贸易有限公司", "RZ-YAG-200C 型氩气纯化设备（高压）", 1, "氩气纯化", false, []);
+        addSaleInternal("河北省", "邯郸市裕方贸易有限公司", "RZ-DYG-200C 型氮气纯化设备（高压）", 1, "氮气纯化", false, []);
+        addSaleInternal("河北省", "大名县东润气体有限公司", "RZ-YA-200G 型高压氩气过滤器", 1, "氩气纯化", false, []);
+        addSaleInternal("河北省", "大名县东润气体有限公司", "RZ-DYC-200G 型高压氮气过滤器", 1, "氮气纯化", false, []);
+        addSaleInternal("河北省", "大名县东润气体有限公司", "RZ-YGC-200G 型高压氧气过滤器", 1, "氧气纯化", false, []);
+        addSaleInternal("河北省", "三河市浩运盛跃碳纳米科技有限公司", "RZ-YA-1C 氩气净化装置", 1, "氩气纯化", false, []);
+        addSaleInternal("河北省", "唐山市化学厂有限公司", "RZ-YA-4C 型氩气净化机", 1, "氩气纯化", false, []);
+        addSaleInternal("河北省", "武安市永天铸业有限公司", "RZ-YA-4D 全自动氩气净化机", 1, "氩气纯化", false, []);
+        addSaleInternal("河北省", "石家庄贝福得电子科技有限公司", "RZ-YA-4D 型氩气净化机", 1, "氩气纯化", false, []);
+        addSaleInternal("河北省", "武安市永天铸业有限公司", "RZ-YA-4C 型氩气净化机", 1, "氩气纯化", false, []);
+        addSaleInternal("河北省", "津西钢铁集团有限公司", "RZ-YA-4C 型氩气净化机", 3, "氩气纯化", false, []);
+        addSaleInternal("河北省", "河北方池新材料有限公司", "RZ-YA-4C 型氩气净化机", 1, "氩气纯化", false, []);
+        addSaleInternal("河北省", "河北瞬达新材料科技有限公司", "RZ-YA-4C 型氩气净化机", 1, "氩气纯化", false, []);
+        addSaleInternal("河北省", "霸州市三强金属制品有限公司", "RZ-YA-4D 型氩气净化机", 1, "氩气纯化", false, []);
+        addSaleInternal("河北省", "河北晶龙集团", "RZ-DYC-60/0.8 型氮气纯化装置", 2, "氮气纯化", false, []);
+        addSaleInternal("河北省", "廊坊市威马机床工具有限公司", "RZ-DGC-8D 型氮气干燥装置", 1, "氮气纯化", false, []);
+        addSaleInternal("河北省", "廊坊市威马机床工具有限公司", "RZ-QGC-15D 型氢气干燥装置", 1, "氢气纯化", false, []);
+        addSaleInternal("河北省", "河北汇泉环保科技有限公司", "RZ-DYC-5D/6N 型全自动氮气净化机", 1, "氮气纯化", false, []);
+        addSaleInternal("河北省", "石家庄友佳商贸有限公司", "RZ-DYC-20D 氮气纯化设备", 1, "氮气纯化", false, []);
+        addSaleInternal("河北省", "河北艾美仕厨具有限公司", "RZ-60D 氨气干燥设备", 1, "氨气纯化", false, []);
+        addSaleInternal("河北省", "河北福昊铸造有限公司", "RZ-AZQ-30 氨分解", 1, "氨气纯化", false, []);
+        addSaleInternal("河北省", "河北福昊铸造有限公司", "RZ-AGC-120D 氨气纯化装置", 2, "氨气纯化", false, []);
+        addSaleInternal("河北省", "河北汇泉环保科技有限公司", "RZ-AGC-20D/EX 全自动氨气纯化设备", 1, "氨气纯化", false, []);
+        addSaleInternal("河北省", "唐山艾美仕电器有限公司", "RZ-AGC-60D 型防爆型全自动氨气净化设备", 1, "氨气纯化", false, []);
+        addSaleInternal("辽宁省", "营口东兴气体有限公司", "RZ-YA-20C 型氩气纯化装置", 1, "氩气纯化", false, []);
+        addSaleInternal("辽宁省", "中国科学院金属研究所", "RZ-YA-5C 氩气纯化装置", 1, "氩气纯化", false, []);
+        addSaleInternal("辽宁省", "沈阳有色金属研究所", "RZ-YA-5C 氩气净化装置", 1, "氩气纯化", false, []);
+        addSaleInternal("辽宁省", "营口东兴气体有限公司（第二套）", "RZ-YA-20C 型氩气纯化装置", 1, "氩气纯化", false, []);
+        addSaleInternal("辽宁省", "盘锦通宇气体有限公司", "RZ-YA-20C 型氩气纯化装置", 1, "氩气纯化", false, []);
+        addSaleInternal("辽宁省", "盘锦通宇气体有限公司", "RZ-DYC-20C 型氮气纯化装置", 1, "氮气纯化", false, []);
+        addSaleInternal("辽宁省", "丹东黄海动力气体有限责任公司", "RZ-YAG-200C 型氩气纯化设备（高压）", 1, "氩气纯化", false, []);
+        addSaleInternal("辽宁省", "丹东黄海动力气体有限责任公司", "RZ-DYG-200C 型氮气纯化设备（高压）", 1, "氮气纯化", false, []);
+        addSaleInternal("辽宁省", "营口经济技术开发区金鹏气体有限公司", "RZ-YAG-200C 型氩气纯化设备（高压）", 1, "氩气纯化", false, []);
+        addSaleInternal("辽宁省", "锦州全福气体有限公司", "RZ-YA-200G 型氩气纯化设备（高压）", 1, "氩气纯化", false, []);
+        addSaleInternal("辽宁省", "沈阳君威新能科技有公司", "RZ-YA-4C 氩气净化装置", 1, "氩气纯化", false, []);
+        addSaleInternal("辽宁省", "沈阳思科测量仪表有限公司", "RZ-YA-4C 氩气净化装置", 1, "氩气纯化", false, []);
+        addSaleInternal("辽宁省", "辽宁凌源钢铁股份有限公司", "RZ-YA-4D 全自动氩气净化装置", 1, "氩气纯化", false, []);
+        addSaleInternal("辽宁省", "沈阳信旺科技有限公司", "RZ-YA-4C 型氩气净化机", 1, "氩气纯化", false, []);
+        addSaleInternal("辽宁省", "大连冰山金属技术有限公司", "RZ-CZA-4C 型氩气净化机", 1, "氩气纯化", false, []);
+        addSaleInternal("辽宁省", "中唯炼焦技术国家工程研究中心有限责任公司", "RZ-YA-4C 型氩气净化机单塔", 1, "氩气纯化", false, []);
+        addSaleInternal("辽宁省", "辽宁连石检验检测有限公司", "RZ-YA-4C 型氩气净化机", 1, "氩气纯化", false, []);
+        addSaleInternal("辽宁省", "丹东荣祥国际货运代理有限公司", "RZ-YA-4D 型氩气净化机", 1, "氩气纯化", false, []);
+        addSaleInternal("辽宁省", "铁岭良工阀门有限责任公司", "RZ-YA-4C 型氩气净化机", 1, "氩气纯化", false, []);
+        addSaleInternal("辽宁省", "中国科学院沈阳自动化研究所", "RZ-YA-4D 型氩气净化机", 1, "氩气纯化", false, []);
+        addSaleInternal("辽宁省", "沈阳科立飞科技有限公司", "RZ-YA-4D 型氩气净化机", 1, "氩气纯化", false, []);
+        addSaleInternal("辽宁省", "辽宁海宝轧辊有限公司", "RZ-YA-4D 型氩气净化机", 1, "氩气纯化", false, []);
+        addSaleInternal("辽宁省", "营口经济技术开发区东兴气体有限公司", "RZ-DYC-20C 氮气纯化装置", 1, "氮气纯化", false, []);
+        addSaleInternal("辽宁省", "营口经济技术开发区东兴气体有限公司", "RZ-YA-20C 型氩气纯化装置", 1, "氩气纯化", false, []);
+        addSaleInternal("辽宁省", "沈阳化工大学", "RZ-DYC-4 型单塔氮气净化机", 1, "氮气纯化", false, []);
+        addSaleInternal("辽宁省", "朝阳金美镓业有限公司", "RZ-QYC-20GD/5N 型防爆型氢气纯化设备", 1, "氢气纯化", false, []);
+        addSaleInternal("辽宁省", "锦州中联五金交电化工有限公司", "RZ-YYC-4D 型全自动氧气纯化设备", 1, "氧气纯化", false, []);
+        addSaleInternal("辽宁省", "锦州华光电子管有限公司", "RZ-HP-2 氢氮混配装置", 1, "混合配气", false, []);
+        addSaleInternal("辽宁省", "锦州华光电子管有限公司", "RZ-HN-10 型氢氮混气装置", 1, "混合配气", false, []);
+        addSaleInternal("辽宁省", "沈阳东博热工科技有限公司", "RZ-HP-250D 型全自动氢氩混合机", 1, "混合配气", false, []);
+        addSaleInternal("辽宁省", "抚顺渼瑞石油化工有限公司", "RZ-HP-20D 型低氧空气配比器", 1, "混合配气", false, []);
+        addSaleInternal("山东省", "章丘盛源气体有限公司", "RZ-YA-30C 型氩气纯化装置", 1, "氩气纯化", false, []);
+        addSaleInternal("山东省", "章丘盛源气体有限公司", "RZ-DYC-30 型氮气纯化装置", 1, "氮气纯化", false, []);
+        addSaleInternal("山东省", "章丘市气体厂", "RZ-YA-200C氩气纯化装置", 1, "氩气纯化", false, []);
+        addSaleInternal("山东省", "章丘市气体长", "RZ-DYC-200C氮气纯化装置", 1, "氮气纯化", false, []);
+        addSaleInternal("山东省", "山东滕州南沙河特种气体厂", "RZ-YA-10C 氩气纯化装置", 1, "氩气纯化", false, []);
+        addSaleInternal("山东省", "山东滕州南沙河特种气体厂", "RZ-DYC-10 氮气纯化装置", 1, "氮气纯化", false, []);
+        addSaleInternal("山东省", "山东滕州南沙河特种气体厂", "RZ-QYC-10 氢气纯化装置", 1, "氢气纯化", false, []);
+        addSaleInternal("山东省", "山东淄博启明化工有限公司", "RZ-YA-10C 氩气纯化装置", 1, "氩气纯化", false, []);
+        addSaleInternal("山东省", "山东淄博启明化工有限公司", "RZ-DYC-10 氮气纯化装置", 1, "氮气纯化", false, []);
+        addSaleInternal("山东省", "威海市新生焊割器材有限公司", "RZ-YAN-20 型氩、氮气纯化装置", 1, "氩氮纯化", false, []);
+        addSaleInternal("山东省", "滕州市南沙河特种气体有限公司", "RZ-YA-10C 氩气纯化装置", 1, "氩气纯化", false, []);
+        addSaleInternal("山东省", "淄博法铝工贸有限公司", "RZ-YA-20C 型氩气纯化装置", 1, "氩气纯化", false, []);
+        addSaleInternal("山东省", "沂源县永安乙炔氧气厂", "RZ-YA-20C 型氩气纯化装置", 1, "氩气纯化", false, []);
+        addSaleInternal("山东省", "泰安市圣润气体有限公司", "RZ-YA-10C 型氩气纯化装置", 1, "氩气纯化", false, []);
+        addSaleInternal("山东省", "泰安市圣润气体有限公司", "RZ-DYC-10C 氮气纯化装置", 1, "氮气纯化", false, []);
+        addSaleInternal("山东省", "威海南海新能源材料有限公司", "RZ-YA-200D/5N 氩气纯化设备", 1, "氩气纯化", false, []);
+        addSaleInternal("山东省", "淄博桓台瑞丰气体有限公司", "RZ-YA-20C 氩气净化装置", 1, "氩气纯化", false, []);
+        addSaleInternal("山东省", "山东恒邦冶炼股份有限公司", "RZ-YA-8D/5N 型高纯氩气纯化设备", 1, "氩气纯化", false, []);
+        addSaleInternal("山东省", "山东恒邦冶炼股份有限公司", "RZ-QYC-12D/7N 型超纯氢气纯化设备", 1, "氢气纯化", false, []);
+        addSaleInternal("山东省", "山东恒邦冶炼股份有限公司", "RZ-L-5D 氯气干燥设备", 1, "氯气纯化", false, []);
+        addSaleInternal("山东省", "青岛宝发物资供应有限公司", "RZ-YA-20D 型全自动氩气纯化装置", 1, "氩气纯化", false, []);
+        addSaleInternal("山东省", "青岛宝发物资供应有限公司", "RZ-DYC-20D 型全自动氮气纯化装置", 1, "氮气纯化", false, []);
+        addSaleInternal("山东省", "山东瑞城宇航碳材料有限公司", "RZ-YA-50D/6N 型全自动氩气纯化设备", 1, "氩气纯化", false, []);
+        addSaleInternal("山东省", "山东瑞城宇航碳材料有限公司", "RZ-DYC-50D/6N 型全自动氩气纯化设备", 1, "氮气纯化", false, []);
+        addSaleInternal("山东省", "淄博华海气体有限公司", "RZ-YA-10C/6N 型氩气纯化设备", 1, "氩气纯化", false, []);
+        addSaleInternal("山东省", "诸城市广源特种气体有限责任公司", "RZ-YAG-200C 高压氩气纯化设备", 1, "氩气纯化", false, []);
+        addSaleInternal("山东省", "滕州市南沙河特种气体站", "RZ-YA-10D/-6N 型全自动氩气纯化设备", 1, "氩气纯化", false, []);
+        addSaleInternal("山东省", "淄博锦庄气体有限公司", "RZ-YAG-200C 型氩气纯化设备（高压）", 1, "氩气纯化", false, []);
+        addSaleInternal("山东省", "淄博锦庄气体有限公司", "RZ-DYG-200C 型氮气纯化设备（高压）", 1, "氮气纯化", false, []);
+        addSaleInternal("山东省", "东阿县金海源气体有限公司", "RZ-YA-50D/6N 型全自动氩气纯化设备", 1, "氩气纯化", false, []);
+        addSaleInternal("山东省", "山东天海气体有限公司", "RZ-YAG-200C 型氩气纯化设备（高压）", 1, "氩气纯化", false, []);
+        addSaleInternal("山东省", "山东天海气体有限公司", "RZ-DYG-200C 型氮气纯化设备（高压）", 1, "氮气纯化", false, []);
+        addSaleInternal("山东省", "枣庄美信制氧有限公司", "RZ-YA-200G 型氩气纯化设备（高压）", 1, "氩气纯化", false, []);
+        addSaleInternal("山东省", "山东宏运达赭山气体有限公司", "RZ-YA-200G 型氩气纯化设备（高压）", 1, "氩气纯化", false, []);
+        addSaleInternal("山东省", "诸城市广源特种气体有限责任公司", "RZ-YA-200G 型氩气纯化设备（高压）", 1, "氩气纯化", false, []);
+        addSaleInternal("山东省", "诸城市广源特种气体有限责任公司", "RZ-DYC-200G 型高压氮气纯化设备", 1, "氮气纯化", false, []);
+        addSaleInternal("山东省", "诸城市广源特种气体有限责任公司", "RZ-YYC-20D/5N 型-EXD 全自动氧气纯化设备", 1, "氧气纯化", false, []);
+        addSaleInternal("山东省", "诸城市广源特种气体有限责任公司", "RZ-CO2-20D/5N 型 全自动二氧化碳纯化设备", 1, "二氧化碳纯化", false, []);
+        addSaleInternal("山东省", "诸城市广源特种气体有限责任公司", "RZ-HEC-20D/6N 型 全自动氦气纯化设备", 1, "氦气纯化", false, []);
+        addSaleInternal("山东省", "潍坊金帆气体有限公司", "RZ-YA-300G 型氩气纯化设备（高压）", 1, "氩气纯化", false, []);
+        addSaleInternal("山东省", "枣庄鑫泰特种气体有限公司", "RZ-YA-200G 型高压氩气纯化设备", 1, "氩气纯化", false, []);
+        addSaleInternal("山东省", "枣庄鑫泰特种气体有限公司", "RZ-DYC-200G 型高压氮气纯化设备", 1, "氮气纯化", false, []);
+        addSaleInternal("山东省", "临沂市盈安气体有限公司", "RZ-YA-200G 型高压氩气过滤器", 1, "氩气纯化", false, []);
+        addSaleInternal("山东省", "临沂市盈安气体有限公司", "RZ-DYC-200G 型高压氮气过滤器", 1, "氮气纯化", false, []);
+        addSaleInternal("山东省", "淄博桓台瑞丰气体有限公司", "RZ-YA-200G 型高压氩气过滤器", 1, "氩气纯化", false, []);
+        addSaleInternal("山东省", "枣庄远东特种气体有限公司", "RZ-YA-200G 型高压氩气过滤器", 1, "氩气纯化", false, []);
+        addSaleInternal("山东省", "微山钢研稀土材料有限公司", "RZ-YA-4C 氩气净化装置", 1, "氩气纯化", false, []);
+        addSaleInternal("山东省", "山东励志达自动化设备有限公司", "RZCZA-4N 半自动氩气净化装置", 2, "氩气纯化", false, []);
+        addSaleInternal("山东省", "山东励志达自动化设备有限公司", "RZZCA-4F 全自动氩气净化装置", 1, "氩气纯化", false, []);
+        addSaleInternal("山东省", "山东励志达自动化设备有限公司", "CZA-4N 全自动氩气净化机", 1, "氩气纯化", false, []);
+        addSaleInternal("山东省", "山东励志达自动化设备有限公司", "ZCA-4F 半自动氩气净化机", 2, "氩气纯化", false, []);
+        addSaleInternal("山东省", "青岛新力通工业有限责任公司", "RZ-YA-4D 全自动氩气净化机", 1, "氩气纯化", false, []);
+        addSaleInternal("山东省", "蓬莱三和铸造有限公司", "RZ-YA-4C 型单塔氩气净化机", 1, "氩气纯化", false, []);
+        addSaleInternal("山东省", "烟台艾迪精密机械股份有限公司", "RZ-YA-4D 型全自动氩气净化机", 1, "氩气纯化", false, []);
+        addSaleInternal("山东省", "山东四海水处理科技股份有限公司", "RZ-YA-4D 型氩气净化机", 2, "氩气纯化", false, []);
+        addSaleInternal("山东省", "金雷科技股份公司", "RZ-YA-4D 型氩气净化机", 2, "氩气纯化", false, []);
+        addSaleInternal("山东省", "济钢集团有限公司", "RZ-YA-4C 型氩气净化机", 1, "氩气纯化", false, []);
+        addSaleInternal("山东省", "济钢集团有限公司", "RZ-YA-4D 型氩气净化机", 2, "氩气纯化", false, []);
+        addSaleInternal("山东省", "山东赛利科膜科技有限公司", "RZ-YA-4D 型氩气净化机", 1, "氩气纯化", false, []);
+        addSaleInternal("山东省", "微山钢研稀土材料有限公司", "RZ-YA-4C 型氩气净化机", 1, "氩气纯化", false, []);
+        addSaleInternal("山东省", "潍坊振兴动力科技有限公司", "RZ-YA-4D 型全自动氩气净化机", 1, "氩气纯化", false, []);
+        addSaleInternal("山东省", "山东同创检测科技有限公司", "RZ-YA-4C 型氩气净化机", 1, "氩气纯化", false, []);
+        addSaleInternal("山东省", "山东艾科赛德电子科技有限公司", "RZ-YA-4C 型氩气净化机", 1, "氩气纯化", false, []);
+        addSaleInternal("山东省", "山东裕隆重工", "RZ-YA-4C 型氩气净化机", 4, "氩气纯化", false, []);
+        addSaleInternal("山东省", "山东艾科赛德电子科技有限公司", "CZA-4N 型氩气净化机", 1, "氩气纯化", false, []);
+        addSaleInternal("山东省", "山东华信工业科技有限公司", "RZ-YA-4D 型氩气净化机", 1, "氩气纯化", false, []);
+        addSaleInternal("山东省", "山东华信工业科技有限公司", "RZ-YA-4C 型氩气净化机", 1, "氩气纯化", false, []);
+        addSaleInternal("山东省", "山东瑞浩重型机械有限公司", "RZ-YA-4D 型氩气净化机", 1, "氩气纯化", false, []);
+        addSaleInternal("山东省", "章丘市宝华锻造有限公司", "RZ-YA-4C 型氩气净化机", 1, "氩气纯化", false, []);
+        addSaleInternal("山东省", "山东滕州特种气体站", "RZ-YA-10C 型氩气纯化装置", 1, "氩气纯化", false, []);
+        addSaleInternal("山东省", "山东滕州特种气体站", "DYC-10III 型氮气纯化装置", 1, "氮气纯化", false, []);
+        addSaleInternal("山东省", "山东滕州特种气体站", "QYC-10 型氢气纯化装置", 1, "氢气纯化", false, []);
+        addSaleInternal("山东省", "淄博启明化工有限公司", "RZ-YA-10 氩气纯化装置", 1, "氩气纯化", false, []);
+        addSaleInternal("山东省", "淄博启明化工有限公司", "RZ-DYC-10 氮气纯化装置", 1, "氮气纯化", false, []);
+        addSaleInternal("山东省", "济南发尔博科技有限公司", "RZ-DYC-10II 型氮气纯化装置", 1, "氮气纯化", false, []);
+        addSaleInternal("山东省", "淄博华海工业气体有限公司", "RZ-DYC-10II 型氮气纯化装置", 1, "氮气纯化", false, []);
+        addSaleInternal("山东省", "济南发尔博科技有限公司", "RZ-DYC-10II 自动氮气纯化装置", 1, "氮气纯化", false, []);
+        addSaleInternal("山东省", "淄博陶瓷研究院", "RZ-DYC-10II 全自动氮气纯化装置", 1, "氮气纯化", false, []);
+        addSaleInternal("山东省", "东阿县金海源气体有限公司", "RZ-DYC-50 型氮气纯化装置", 1, "氮气纯化", false, []);
+        addSaleInternal("山东省", "山东工业陶瓷研究设计院有限公司", "RZ-DYC-4D 型全自动氮气纯化设备", 1, "氮气纯化", false, []);
+        addSaleInternal("山东省", "山东恒邦冶炼股份有限公司", "RZ-DYC-8D 型全自动氮气纯化设备", 1, "氮气纯化", false, []);
+        addSaleInternal("山东省", "山东大学", "RZ-DYC-5D/6N 型全自动氮气纯化装置", 1, "氮气纯化", false, []);
+        addSaleInternal("山东省", "山东恒邦冶炼股份有限公司", "RZ-DYC-20D/5N 型全自动氮气纯化装置", 1, "氮气纯化", false, []);
+        addSaleInternal("山东省", "滕州市南沙河特种气体站", "RZ-DYC-10D/6N 型全自动氮气纯化装置", 1, "氮气纯化", false, []);
+        addSaleInternal("山东省", "山东宏运达赭山气体有限公司", "RZ-DYG-200C 型食品级氮气纯化设备", 1, "氮气纯化", false, []);
+        addSaleInternal("山东省", "山东宏运达赭山气体有限公司", "RZ-CO2-35D 型食品级二氧化碳纯化设备", 1, "二氧化碳纯化", false, []);
+        addSaleInternal("山东省", "青岛华锦盛世新材料科技发展有限公司", "RZ-DYC-10C/T 型半自动氮气净化设备", 1, "氮气纯化", false, []);
+        addSaleInternal("山东省", "淄博桓台瑞丰气体有限公司", "RZ-DYC-200G 型高压氮气纯化设备", 1, "氮气纯化", false, []);
+        addSaleInternal("山东省", "枣庄远东特种气体有限公司", "RZ-DYC-200G 型高压氮气过滤器", 1, "氮气纯化", false, []);
+        addSaleInternal("山东省", "潍坊市坊子天波气体厂", "RZ-DYG-200G 型食品级氮气纯化设备", 1, "氮气纯化", false, []);
+        addSaleInternal("山东省", "潍坊市坊子天波气体厂", "RZ-CO2-35D 型食品级二氧化碳纯化设备", 1, "二氧化碳纯化", false, []);
+        addSaleInternal("山东省", "禹城市金泰气体有限责任公司", "RZ-DYC-200G 型高压氮气过滤器", 1, "氮气纯化", false, []);
+        addSaleInternal("山东省", "滕州南沙河特种气体有限公司", "RZ-QYC-10/0.8 氢气纯化装置", 1, "氢气纯化", false, []);
+        addSaleInternal("山东省", "诸城市广源特种气体有限责任公司", "RZ-CO2-20D/5N 型全自动二氧化碳纯化设备", 1, "二氧化碳纯化", false, []);
+        addSaleInternal("山东省", "中国科学院青岛分院", "RZ-5D 氨气纯化器", 1, "氨气纯化", false, []);
+        addSaleInternal("山东省", "山东工业陶瓷研究设计院有限公司", "RZ-15W 氨气回收纯化设备", 1, "氨气纯化", false, []);
+        addSaleInternal("山东省", "机械科学研究总院青岛分院", "RZ-3D 氨气纯化器", 1, "氨气纯化", false, []);
+        addSaleInternal("山东省", "山东科技大学", "RZ-AGC-2D 型", 1, "氨气纯化", false, []);
+        addSaleInternal("山东省", "山东工业陶瓷研究设计院有限公司", "RZ-AGC-20D 防爆型氨气纯化设备（全自动）", 1, "氨气纯化", false, []);
+        addSaleInternal("山东省", "济南华信自动化工程有限公司", "RZ-CO2-60D/5N 型二氧化碳纯化设备", 1, "二氧化碳纯化", false, []);
+        addSaleInternal("山东省", "禹城市金泰气体有限责任公司", "RZ-CO2-60D 型二氧化碳纯化设备", 1, "二氧化碳纯化", false, []);
+        addSaleInternal("山东省", "诸城市广源特种气体有限责任公司", "RZ-YYC-20D/5N 型-EXD全自动氧气纯化设备", 1, "氧气纯化", false, []);
+        addSaleInternal("山东省", "山东天海气体有限公司", "RZ-CO2-20D 型二氧化碳纯化设备", 1, "二氧化碳纯化", false, []);
+        addSaleInternal("山东省", "山东泰吉星电子科技有限公司", "RZ-YSJ-10", 1, "压缩空气过滤", false, []);
+        addSaleInternal("山东省", "山东泰吉星电子科技有限公司", "RZ-YSJ-60", 1, "压缩空气过滤", false, []);
+        addSaleInternal("山东省", "山东泰吉星电子科技有限公司", "RZ-HN-20 型氢氮混气装置", 1, "混合配气", false, []);
+        addSaleInternal("山东省", "山东蓝湾新材料有限公司", "RZ-HP-300D 低氧空气混合机", 1, "混合配气", false, []);
+        addSaleInternal("江苏省", "徐州劲鹏气体有限公司", "RZ-YA-10C 氩气纯化装置", 1, "氩气纯化", false, []);
+        addSaleInternal("江苏省", "徐州劲鹏气体有限公司", "RZ-DYC-10III 氮气纯化装置", 1, "氮气纯化", false, []);
+        addSaleInternal("江苏省", "常州武进华阳气体有限公司", "RZ-YA-10C 氩气纯化装置", 2, "氩气纯化", false, []);
+        addSaleInternal("江苏省", "晶伟电子材料有限公司", "RZ-YA-60 氩气纯化装置", 1, "氩气纯化", false, []);
+        addSaleInternal("江苏省", "徐州玖玖发多元气体有限公司", "RZ-YA-25C 型氩气纯化装置", 1, "氩气纯化", false, []);
+        addSaleInternal("江苏省", "徐州玖玖发多元气体有限公司", "RZ-DYC-25 型氮气纯化装置", 1, "氮气纯化", false, []);
+        addSaleInternal("江苏省", "扬州创新气体有限公司", "RZ-YA-10C 型氩气纯化装置", 1, "氩气纯化", false, []);
+        addSaleInternal("江苏省", "扬州创新气体有限公司", "RZ-DYC-10 型氮气纯化装置", 1, "氮气纯化", false, []);
+        addSaleInternal("江苏省", "南京立业工业气体有限公司", "RZ-YA-10C 型氩气纯化装置", 1, "氩气纯化", false, []);
+        addSaleInternal("江苏省", "南京立业工业气体有限公司", "RZ-DYC-10 型氮气纯化装置", 1, "氮气纯化", false, []);
+        addSaleInternal("江苏省", "常熟建华磨具股份有限公司", "RZ-YA-6C 氩气净化装置", 1, "氩气纯化", false, []);
+        addSaleInternal("江苏省", "凯尔凯德新材料科技泰州有限公司", "RZ-YA-10C 氩气净化装置", 1, "氩气纯化", false, []);
+        addSaleInternal("江苏省", "南京大学金陵学院", "RZ-RZ-1000NL 气体净化装置", 1, "气体净化", false, []);
+        addSaleInternal("江苏省", "滨海县安峰气体有限公司", "RZ-YA-20C 型氩气纯化装置", 1, "氩气纯化", false, []);
+        addSaleInternal("江苏省", "滨海县安峰气体有限公司", "RZ-DYC-20C 氮气纯化装置", 1, "氮气纯化", false, []);
+        addSaleInternal("江苏省", "北京中石伟业科技无锡有限公司", "RZ-YA-10C 型氩气纯化装置", 4, "氩气纯化", false, []);
+        addSaleInternal("江苏省", "江阴市阿尔法机械有限公司", "RZ-YA-20C 型氩气纯化装置", 1, "氩气纯化", false, []);
+        addSaleInternal("江苏省", "江阴市阿尔法机械有限公司", "RZ-DYC-20C 氮气纯化装置", 1, "氮气纯化", false, []);
+        addSaleInternal("江苏省", "苏州华业气体制造有限公司", "RZ-YA-20C 型氩气纯化装置", 1, "氩气纯化", false, []);
+        addSaleInternal("江苏省", "苏州华业气体制造有限公司", "RZ-DYC-20C 氮气纯化装置", 1, "氮气纯化", false, []);
+        addSaleInternal("江苏省", "兴化市远红外元件厂", "RZ-YA-20C 型氩气纯化装置", 1, "氩气纯化", false, []);
+        addSaleInternal("江苏省", "扬中市长乐制氧厂", "RZ-YA-20C 型氩气纯化装置", 1, "氩气纯化", false, []);
+        addSaleInternal("江苏省", "南京立业工业气体厂", "RZ-YA-20C 型氩气纯化装置", 1, "氩气纯化", false, []);
+        addSaleInternal("江苏省", "南京立业工业气体厂", "RZ-DYC-20C 氮气纯化装置", 1, "氮气纯化", false, []);
+        addSaleInternal("江苏省", "丹阳顺发工业气体有限公司", "RZ-YA-20C 氩气净化设备", 1, "氩气纯化", false, []);
+        addSaleInternal("江苏省", "泰州博息电子科技有限公司", "RZ-YA-20C 型氩气纯化装置", 1, "氩气纯化", false, []);
+        addSaleInternal("江苏省", "泰兴挚富新材料科技有限公司", "RZ-YA-10D 氩气净化装置", 2, "氩气纯化", false, []);
+        addSaleInternal("江苏省", "卓屹新能源技术（苏州）有限公司", "RZ-YA-4D/6N 型全自动超纯氩气净化机", 1, "氩气纯化", false, []);
+        addSaleInternal("江苏省", "卓屹新能源技术（苏州）有限公司", "RZ-DYC-4D/6N 型全自动超纯氮气净化机", 1, "氮气纯化", false, []);
+        addSaleInternal("江苏省", "扬州创新工业气体有限公司", "RZ-YAG-200C 型氩气纯化设备（高压）", 1, "氩气纯化", false, []);
+        addSaleInternal("江苏省", "扬州创新工业气体有限公司", "RZ-DYG-200C 型氮气纯化设备（高压）", 1, "氮气纯化", false, []);
+        addSaleInternal("江苏省", "江苏红杉机械制造有限公司工业气体站", "RZ-YAG-200C 型氩气纯化设备（高压）", 1, "氩气纯化", false, []);
+        addSaleInternal("江苏省", "江阴市金凤工业用气有限公司", "RZ-YA-50D/6N 型全自动超纯氩纯化设备", 1, "氩气纯化", false, []);
+        addSaleInternal("江苏省", "江阴市金凤工业用气有限公司", "RZ-DYC-50D/6N 全自动超纯氮纯化设备", 1, "氮气纯化", false, []);
+        addSaleInternal("江苏省", "张家港威尔特机械装备有限公司", "RZ-YA-110D/6N 型全自动氩气纯化设备", 1, "氩气纯化", false, []);
+        addSaleInternal("江苏省", "江苏恒神股份有限公司", "RZ-YA-110D/6N 型全自动氩气纯化设备", 1, "氩气纯化", false, []);
+        addSaleInternal("江苏省", "江苏宝祥气体有限公司", "RZ-YA-60D/6N 型氩气纯化设备", 1, "氩气纯化", false, []);
+        addSaleInternal("江苏省", "无锡市华盛气体有限公司", "RZ-YA-350G 型氩气纯化设备（高压）", 1, "氩气纯化", false, []);
+        addSaleInternal("江苏省", "无锡市华盛气体有限公司", "RZ-DY-350G 型氮气纯化设备（高压）", 1, "氮气纯化", false, []);
+        addSaleInternal("江苏省", "宿迁市金鹏气体有限公司", "RZ-YA-300G 型氩气纯化设备（高压）", 1, "氩气纯化", false, []);
+        addSaleInternal("江苏省", "徐州东风气体厂", "RZ-YA-300G 型氩气纯化设备（高压）", 1, "氩气纯化", false, []);
+        addSaleInternal("江苏省", "徐州东风气体厂", "RZ-DYC-300G 型氮气纯化设备（高压）", 1, "氮气纯化", false, []);
+        addSaleInternal("江苏省", "江苏华东空分设备制造有限公司", "RZ-YA-200G 型氩气纯化设备", 1, "氩气纯化", false, []);
+        addSaleInternal("江苏省", "江苏华东空分设备制造有限公司", "RZ-DYC-200G 型高压氮气纯化设备", 1, "氮气纯化", false, []);
+        addSaleInternal("江苏省", "南京原子制造研究所", "RZ-YA-10D/0.6 全自动氩气纯化设备含分析仪", 1, "氩气纯化", false, []);
+        addSaleInternal("江苏省", "无锡中欣达国际贸易有限公司", "RZ-YA-10D 全自动高纯氩气纯化设备", 1, "氩气纯化", false, []);
+        addSaleInternal("江苏省", "东海县环宇气体供应站", "RZ-YA-200G 型高压氩气过滤器", 1, "氩气纯化", false, []);
+        addSaleInternal("江苏省", "东海县环宇气体供应站", "RZ-DYC-200G 型高压氮气过滤器", 1, "氮气纯化", false, []);
+        addSaleInternal("江苏省", "江苏和兴汽车有限公司", "RZ-YA-4C 氩气净化装置", 1, "氩气纯化", false, []);
+        addSaleInternal("江苏省", "泰州市新华冶金设备有限公司", "RZ-YA-4C 氩气净化装置", 1, "氩气纯化", false, []);
+        addSaleInternal("江苏省", "江苏申达铸造有限公司", "RZ-YA-4C 氩气净化装置", 1, "氩气纯化", false, []);
+        addSaleInternal("江苏省", "常熟建华磨具股份有限公司", "YA-6C 氩气净化装置", 1, "氩气纯化", false, []);
+        addSaleInternal("江苏省", "苏州勤堡精密机械有限公司", "RZ-YA-4C 氩气净化装置", 2, "氩气纯化", false, []);
+        addSaleInternal("江苏省", "镇江市镇特合金材料有限公司", "RZ-YA-4C 氩气净化装置", 1, "氩气纯化", false, []);
+        addSaleInternal("江苏省", "江苏天淮钢管有限公司", "RZ-YA-4C 氩气净化装置", 1, "氩气纯化", false, []);
+        addSaleInternal("江苏省", "南通通能精机热加工有限公司", "RZ-YA-4C 氩气净化装置", 2, "氩气纯化", false, []);
+        addSaleInternal("江苏省", "徐工集团工程机械股份有限公司江苏徐州工程机械研究所", "RZ-YA-4C 氩气净化装置", 1, "氩气纯化", false, []);
+        addSaleInternal("江苏省", "无锡蠡湖铸业有限公司", "RZ-YA-4C 氩气净化装置", 2, "氩气纯化", false, []);
+        addSaleInternal("江苏省", "金坛市宝杭新型金属材料有限公司", "RZ-YA-4C 氩气净化装置", 1, "氩气纯化", false, []);
+        addSaleInternal("江苏省", "镇江环宇轧辊厂", "RZ-YA-4C 氩气净化装置", 1, "氩气纯化", false, []);
+        addSaleInternal("江苏省", "常州金坛市宝杭新型金属材料有限公司", "RZ-YA-4C 氩气净化装置", 1, "氩气纯化", false, []);
+        addSaleInternal("江苏省", "南通宏德机电有限公司", "RZ-YA-4C 氩气净化装置", 1, "氩气纯化", false, []);
+        addSaleInternal("江苏省", "吴江中瑞机电科技有限公司", "RZ-YA-4C 氩气净化装置", 1, "氩气纯化", false, []);
+        addSaleInternal("江苏省", "扬州华铁铁路配件有限公司", "RZ-YA-4C 氩气净化装置", 1, "氩气纯化", false, []);
+        addSaleInternal("江苏省", "南通顺益金属制品有限公司", "RZ-YA-4C 氩气净化装置", 1, "氩气纯化", false, []);
+        addSaleInternal("江苏省", "南京腾元软磁有限公司", "RZ-YA-4D 全自动氩气净化装置", 1, "氩气纯化", false, []);
+        addSaleInternal("江苏省", "南京畅翔仪器设备有限公司", "RZ-YA-4C 氩气净化装置", 1, "氩气纯化", false, []);
+        addSaleInternal("江苏省", "南通诺嘉机械设备有限公司", "RZ-YA-4D 全自动氩气净化装置", 1, "氩气纯化", false, []);
+        addSaleInternal("江苏省", "苏州孟氏激光有限公司", "RZ-YA-4D 全自动氩气净化装置", 1, "氩气纯化", false, []);
+        addSaleInternal("江苏省", "南京农业大学", "RZ-YA-4D 全自动氩气净化装置", 1, "氩气纯化", false, []);
+        addSaleInternal("江苏省", "吴江中瑞科技有限公司", "RZ-YA-4D 全自动氩气净化装置", 5, "氩气纯化", false, []);
+        addSaleInternal("江苏省", "江苏天淮钢管有限公司", "RZ-YA-4C 型氩气净化机", 1, "氩气纯化", false, []);
+        addSaleInternal("江苏省", "伦辉科技（苏州）有限公司", "RZ-YA-4C 型氩气净化机", 1, "氩气纯化", false, []);
+        addSaleInternal("江苏省", "无锡东恒新能源科技有限公司", "RZ-YA-4 型单塔氩气净化机", 1, "氩气纯化", false, []);
+        addSaleInternal("江苏省", "溧阳市北方机械有限公司", "RZ-YA-4C 型氩气净化机", 1, "氩气纯化", false, []);
+        addSaleInternal("江苏省", "张家港市华嘉投资有限公司", "RZ-YA-4D 型氩气净化机", 1, "氩气纯化", false, []);
+        addSaleInternal("江苏省", "吴江市江丰铝业有限公司", "RZ-YA-4C 型氩气净化机", 1, "氩气纯化", false, []);
+        addSaleInternal("江苏省", "江苏新中洲特种合金材料有限公司", "RZ-YA-4C 型氩气净化机", 1, "氩气纯化", false, []);
+        addSaleInternal("江苏省", "扬州摩笛尔电子材料有限公司", "RZ-YA-4D 型氩气净化机", 1, "氩气纯化", false, []);
+        addSaleInternal("江苏省", "二重集团（镇江）重型装备厂有限责任公司", "RZ-YA-4D 型氩气净化机", 1, "氩气纯化", false, []);
+        addSaleInternal("江苏省", "兴化市远红外元件厂", "RZ-YA-4C 型氩气净化机", 1, "氩气纯化", false, []);
+        addSaleInternal("江苏省", "扬州市硕成伟业电热设备有限公司", "RZ-YA-4D 型氩气净化机", 1, "氩气纯化", false, []);
+        addSaleInternal("江苏省", "句容市恒祥金属再生利用有限公司", "RZ-YA-4D 型氩气净化机", 1, "氩气纯化", false, []);
+        addSaleInternal("江苏省", "江苏宏德特种部件股份有限公司", "RZ-YA-4D 型氩气净化机", 2, "氩气纯化", false, []);
+        addSaleInternal("江苏省", "宜兴市沪东铸造有限公司", "RZ-YA-4C 型氩气净化机", 1, "氩气纯化", false, []);
+        addSaleInternal("江苏省", "江苏聚源电气有限公司", "RZ-YA-4D 型全自动氩气净化机", 1, "氩气纯化", false, []);
+        addSaleInternal("江苏省", "江苏新中洲特种合金材料有限公司", "RZ-YA-4D 型全自动氩气净化机", 1, "氩气纯化", false, []);
+        addSaleInternal("江苏省", "航扬云天科技（苏州）有限公司", "RZ-YA-4D 型全自动氩气净化机", 1, "氩气纯化", false, []);
+        addSaleInternal("江苏省", "无锡市金义博仪器科技有限公司", "RZ-YA-4C 型氩气净化机", 1, "氩气纯化", false, []);
+        addSaleInternal("江苏省", "淮安华斯特照明有限公司", "RZ-YA-4D/7N 全自动氩气净化机", 1, "氩气纯化", false, []);
+        addSaleInternal("江苏省", "淮安华斯特照明有限公司", "EGP010POU 常温纯化器", 1, "气体纯化", false, []);
+        addSaleInternal("江苏省", "江苏鑫化工程科技有限公司", "RZ-YA-4C 型氩气净化机", 1, "氩气纯化", false, []);
+        addSaleInternal("江苏省", "淮安华斯特照明有限公司", "POU 常温纯化器", 1, "气体纯化", false, []);
+        addSaleInternal("江苏省", "江苏耶拿设备有限公司", "RZ-YA-4C 型氩气净化机", 1, "氩气纯化", false, []);
+        addSaleInternal("江苏省", "扬州市广陵区友联五交化公司", "RZ-YA-4C 型氩气净化机", 1, "氩气纯化", false, []);
+        addSaleInternal("江苏省", "常州市阳光铸造有限公司", "RZ-YA-4D 型氩气净化机", 1, "氩气纯化", false, []);
+        addSaleInternal("江苏省", "扬州加润消失模科技有限公司", "RZ-YA-4D 型氩气净化机", 1, "氩气纯化", false, []);
+        addSaleInternal("江苏省", "江苏轩辕特种材料科技有限公司", "RZ-YA-4D 型氩气净化机", 1, "氩气纯化", false, []);
+        addSaleInternal("江苏省", "江苏汉华热管理科技有限公司", "RZ-YA-4D 型氩气净化机", 1, "氩气纯化", false, []);
+        addSaleInternal("江苏省", "江苏六中冶金装备科技有限公司", "RZ-YA-4C 型氩气净化机", 1, "氩气纯化", false, []);
+        addSaleInternal("江苏省", "江苏省镔鑫钢铁集团有限公司", "RZ-YA-4D 型氩气净化机", 1, "氩气纯化", false, []);
+        addSaleInternal("江苏省", "张家港科泰化工贸易有限公司", "RZ-YA-4D 型氩气净化机", 1, "氩气纯化", false, []);
+        addSaleInternal("江苏省", "南通宏安金属制造有限公司", "RZ-YA-4D 型氩气净化机", 1, "氩气纯化", false, []);
+        addSaleInternal("江苏省", "常州华阳气体公司", "RZ-DYC-10III 氮气纯化装置", 1, "氮气纯化", false, []);
+        addSaleInternal("江苏省", "徐州劲鹏气体公司", "RZ-YA-10C 氩气纯化装置", 1, "氩气纯化", false, []);
+        addSaleInternal("江苏省", "徐州劲鹏气体公司", "RZ-DYC-10III 氮气纯化装置", 1, "氮气纯化", false, []);
+        addSaleInternal("江苏省", "连云港国伦石英制品有限公司", "RZ-DYC-20/0.8 氮气纯化装置", 1, "氮气纯化", false, []);
+        addSaleInternal("江苏省", "徐州玖玖发多元气体有限公司", "RZ-YA-25C 氩气纯化装置", 1, "氩气纯化", false, []);
+        addSaleInternal("江苏省", "徐州玖玖发多元气体有限公司", "RZ-DYC-25III 氮气纯化装置", 1, "氮气纯化", false, []);
+        addSaleInternal("江苏省", "扬州创新工业气体有限公司", "RZ-YA-25C 氩气纯化装置", 1, "氩气纯化", false, []);
+        addSaleInternal("江苏省", "扬州创新工业气体有限公司", "RZ-DYC-10 型氮气纯化装置", 1, "氮气纯化", false, []);
+        addSaleInternal("江苏省", "南京立业工业气体有限公司", "RZ-YA-25C 氩气纯化装置", 1, "氩气纯化", false, []);
+        addSaleInternal("江苏省", "江苏欧亚蓝宝光电科技有限公司", "RZ-DYC-1 型氮气纯化装置", 1, "氮气纯化", false, []);
+        addSaleInternal("江苏省", "江苏顺风光电科技有限公司", "RZ-DGC-300D 型氮气纯化器", 1, "氮气纯化", false, []);
+        addSaleInternal("江苏省", "江苏顺风新能源科技有限公司", "RZ-DGC-600D 型氮气纯化器", 1, "氮气纯化", false, []);
+        addSaleInternal("江苏省", "中复神鹰碳纤维有限责任公司", "RZ-DYC-50 型高纯氮气净化器", 1, "氮气纯化", false, []);
+        addSaleInternal("江苏省", "南京诺泰施格科学仪器有限公司", "RZ-DYC-1D 型氮气净化机", 1, "氮气纯化", false, []);
+        addSaleInternal("江苏省", "丹阳顺发工业气体有限公司", "RZ-DYC-20 氮气纯化设备", 1, "氮气纯化", false, []);
+        addSaleInternal("江苏省", "中复神鹰碳纤维有限责任公司", "RZ-DYC-200C/5N 型高纯氮气纯化器", 2, "氮气纯化", false, []);
+        addSaleInternal("江苏省", "中仪云（南京）科技发展有限公司", "RZ-DYC-4D/6N 型氮气净化机", 1, "氮气纯化", false, []);
+        addSaleInternal("江苏省", "无锡市保博特机械设备有限公司", "RZ-DYC-5D/5N 型全自动氮气净化机", 1, "氮气纯化", false, []);
+        addSaleInternal("江苏省", "无锡市华盛气体有限公司", "RZ-DYC-350G 型氮气纯化设备（高压）", 1, "氮气纯化", false, []);
+        addSaleInternal("江苏省", "中仪云（南京）科技发展有限公司", "RZ-DYC-4D/6N 氮气净化机", 1, "氮气纯化", false, []);
+        addSaleInternal("江苏省", "中国石化南京金陵石化烷基苯厂", "RZ-FQYC-20/0.8 氢气纯化装置", 1, "氢气纯化", false, []);
+        addSaleInternal("江苏省", "连云港智聚光电器材有限公司", "RZ-QYC-10/0.8 氢气纯化装置", 1, "氢气纯化", false, []);
+        addSaleInternal("江苏省", "连云港赣榆县鑫润硅业发展有限公司", "RZ-QYC-20/0.8 氢气纯化装置", 1, "氢气纯化", false, []);
+        addSaleInternal("江苏省", "连云港国伦石英制品有限公司", "RZ-QYC-30/0.8 氢气纯化装置", 1, "氢气纯化", false, []);
+        addSaleInternal("江苏省", "泰兴市华能工业炉有限公司", "RZ-QYC-10C/4N 半自动氢气纯化设备", 1, "氢气纯化", false, []);
+        addSaleInternal("江苏省", "常州拜特测控技术有限公司", "RZ-QYC-8D/5N 隔爆型氢气纯化设备", 1, "氢气纯化", false, []);
+        addSaleInternal("江苏省", "江苏杨帆机电设备制造有限公司", "RZ-HEC-50 型氦气纯化装置", 1, "氦气纯化", false, []);
+        addSaleInternal("江苏省", "仪征亚新科双环活塞环有限公司", "RZ-10D 氨气纯化器", 1, "氨气纯化", false, []);
+        addSaleInternal("江苏省", "天龙科技炉业（无锡）有限公司", "RZ-AZQ-15 氨分解", 1, "氨气纯化", false, []);
+        addSaleInternal("江苏省", "天龙科技炉业（无锡）有限公司", "RZ-AZQ-30 氨分解", 1, "氨气纯化", false, []);
+        addSaleInternal("江苏省", "天龙科技炉业（无锡）有限公司", "RZ-AGC-120D 氨气纯化装置", 2, "氨气纯化", false, []);
+        addSaleInternal("江苏省", "昆山三民涂赖电子材料技术有公司", "RZ-AGC-60D 防爆型氨气纯化设备", 1, "氨气纯化", false, []);
+        addSaleInternal("江苏省", "中锗科技有限公司", "聚四氟乙烯烧结过滤器", 2, "压缩空气过滤", false, []);
+        addSaleInternal("江苏省", "无锡勋达无线电厂", "RZ-HN-70 型氢氮混气装置", 1, "混合配气", false, []);
+        addSaleInternal("江苏省", "昆山良工精密机械有限公司", "RZ-HN-5 型氢氮混气装置", 1, "混合配气", false, []);
+        addSaleInternal("江苏省", "爱森（中国）絮凝剂有限公司", "HN-Ⅱ型低氧空气自动混合装置", 1, "混合配气", false, []);
+        addSaleInternal("江苏省", "江苏海王健康生物科技有限公司", "RZ-HP-10 型二氧化碳氮混合气装置", 1, "混合配气", false, []);
+        addSaleInternal("江苏省", "昆山气管路改造设备", "RZ-DN15 型", 1, "混合配气", false, []);
+        addSaleInternal("江苏省", "国芯半导体（仪征）有限公司", "RZ-HN-15 型氢氮混气装置", 1, "混合配气", false, []);
+        addSaleInternal("江苏省", "大丰市天祥气体有限公司", "RZ-HY-30 型氢氩混气装置", 1, "混合配气", false, []);
+        addSaleInternal("江苏省", "昆山因斯特机电安装工程有限公司", "RZ-DN15 混合气管路改造安全阀", 1, "混合配气", false, []);
+        addSaleInternal("江苏省", "爱森如东化工有限公司", "RZ-HN-200 型低氧混合气装置", 1, "混合配气", false, []);
+        addSaleInternal("江苏省", "爱森（中国）絮凝剂有限公司", "HN-20Ⅱ型低氧空气混合机", 2, "混合配气", false, []);
+        addSaleInternal("江苏省", "爱森（如东）絮凝剂有限公司", "HN-20Ⅱ型低氧空气混合机", 1, "混合配气", false, []);
+        addSaleInternal("江苏省", "爱森（中国）絮凝剂有限公司", "HN-300Ⅱ型低氧空气混合机", 1, "混合配气", false, []);
+        addSaleInternal("江苏省", "苏州格亚拓精密机械有限公司", "RZ-HN-20D 型氢氮混配装置", 1, "混合配气", false, []);
+        addSaleInternal("江苏省", "苏州净佰仟环保净化工程有限公司", "RZ-HN-20D 型氢氮混配装置", 1, "混合配气", false, []);
+        addSaleInternal("江苏省", "宿迁宿芯半导体有限公司", "RZ-HN-20D 型氢氮混配装置", 1, "混合配气", false, []);
+        addSaleInternal("江苏省", "超炬芯半导体（江苏）有限公司", "RZ-HN-10D 型氢氮混配装置", 1, "混合配气", false, []);
+        addSaleInternal("江苏省", "爱森（中国）絮凝剂有限公司", "HN-250Ⅱ型低氧空气混合机", 1, "混合配气", false, []);
+        addSaleInternal("江苏省", "昆山德尚金属制品有限公司", "RZ-HP-20Ⅱ型氢氩混合配比装置", 1, "混合配气", false, []);
+        addSaleInternal("江苏省", "江苏聚成泰新材料科技有限公司", "RZ-HP-20 低氧空气配比装置", 1, "混合配气", false, []);
+        addSaleInternal("江苏省", "苏州菜根集成电路有限公司", "RZ-NH-10Z 型全自动氢氮混配装置", 1, "混合配气", false, []);
+        addSaleInternal("江苏省", "江苏健阳节能科技集团有限公司", "RZ-HP-120D 型全自动氢氮混合机", 1, "混合配气", false, []);
+        addSaleInternal("江苏省", "常州星海电子股份有限公司", "RZ-HP-50D 型全自动氢氮混合配气设备", 1, "混合配气", false, []);
+        addSaleInternal("江苏省", "江苏锦昌钛工业科技有限公司", "RZ-NH-10Z 型全自动氢氮混配装置", 1, "混合配气", false, []);
+        addSaleInternal("江苏省", "江苏和利时新材料有限公司", "RZ-HPON-15DEXD 全自动低氧空气混合机", 1, "混合配气", false, []);
+        addSaleInternal("江苏省", "南京瑞固聚合物有限公司", "RZ-HP-150D 全自动低氧空气混合设备（防爆型）", 1, "混合配气", false, []);
+        addSaleInternal("江苏省", "江苏万盛大伟化学有限公司", "RZ-HPON-50D-EXD 全自动低氧空气混合机", 1, "混合配气", false, []);
+        addSaleInternal("广东省", "广东阳江同德工业气体有限公司", "RZ-YA-20C 型氩气纯化装置", 1, "氩气纯化", false, []);
+        addSaleInternal("广东省", "深圳市伽玛纳米电子有限公司", "RZYA-8C 氩气纯化装置", 1, "氩气纯化", false, []);
+        addSaleInternal("广东省", "深圳市伽玛纳米电子有限公司", "RZDYC-8C 氮气纯化装置", 1, "氮气纯化", false, []);
+        addSaleInternal("广东省", "速迈德电子（东莞）有限公司", "RZ-YA-10D 型全自动氩气纯化装置", 2, "氩气纯化", false, []);
+        addSaleInternal("广东省", "亚浩电子五金塑胶(惠州)有限公司", "RZ-YA-4C 型氩气纯化设备", 2, "氩气纯化", false, []);
+        addSaleInternal("广东省", "亚浩电子五金塑胶(惠州)有限公司", "RZ-DYC-4C 型高压氮气纯化设备", 1, "氮气纯化", false, []);
+        addSaleInternal("广东省", "中山中奥马口铁工业有限公司", "RZ-YA-4C 氩气净化装置", 1, "氩气纯化", false, []);
+        addSaleInternal("广东省", "深圳市比亚迪汽车有限公司", "RZ-YA-4C 氩气净化装置", 1, "氩气纯化", false, []);
+        addSaleInternal("广东省", "深圳市伽玛纳米电子有限公司", "RZ-YA-4C 氩气净化装置", 1, "氩气纯化", false, []);
+        addSaleInternal("广东省", "广州市诗尼曼家居有限公司", "RZ-YA-1C 氩气净化装置", 1, "氩气纯化", false, []);
+        addSaleInternal("广东省", "深圳市奥特斯登科技有限公司", "RZ-YA-4D 型全自动氩气净化机", 1, "氩气纯化", false, []);
+        addSaleInternal("广东省", "佛山市中研非晶科技股份有限公司", "RZ-YA-4D 型全自动氩气净化机", 1, "氩气纯化", false, []);
+        addSaleInternal("广东省", "珠海洛驰焊接科技有限公司", "RZ-YA-4D 型全自动氩气净化机", 1, "氩气纯化", false, []);
+        addSaleInternal("广东省", "珠海新航星无损检测科技有限公司", "RZ-YA-4C 型氩气净化机", 5, "氩气纯化", false, []);
+        addSaleInternal("广东省", "广州优嘉咨询服务有限公司", "RZ-YA-4C 型氩气净化机", 1, "氩气纯化", false, []);
+        addSaleInternal("广东省", "广东凯勒斯卫浴实业有限公司", "RZ-YA-4C 型氩气净化机", 1, "氩气纯化", false, []);
+        addSaleInternal("广东省", "广州万博进出口有限公司", "RZ-YA-4D 型氩气净化机", 1, "氩气纯化", false, []);
+        addSaleInternal("广东省", "广州广试仪器有限公司", "RZ-YA-4C 型氩气净化机", 1, "氩气纯化", false, []);
+        addSaleInternal("广东省", "阳春市泰力工贸有限公司", "RZ-YA-4C 型氩气净化机", 1, "氩气纯化", false, []);
+        addSaleInternal("广东省", "荃胜精密机械工业(中山)有限公司", "RZ-YA-4D 型氩气净化机", 1, "氩气纯化", false, []);
+        addSaleInternal("广东省", "广东福驰科技有限公司", "RZ-YA-4C 型氩气净化机", 1, "氩气纯化", false, []);
+        addSaleInternal("广东省", "佛山市祯大商贸有限公司", "RZ-YA-4D 型氩气净化机", 1, "氩气纯化", false, []);
+        addSaleInternal("广东省", "开平市宏莞五金制品有限公司", "RZ-YA-4C 型氩气净化机", 1, "氩气纯化", false, []);
+        addSaleInternal("广东省", "广州市天丰珠宝有限公司", "RZ-YA-4D 型氩气净化机", 1, "氩气纯化", false, []);
+        addSaleInternal("广东省", "深圳市宏济医疗技术开放有限公司", "RZ-YA-4C 型氩气净化机", 1, "氩气纯化", false, []);
+        addSaleInternal("广东省", "中山市远洋工业材料有限公司", "RZ-YA-4D 型氩气净化机", 2, "氩气纯化", false, []);
+        addSaleInternal("广东省", "华南理工大学", "RZ-DYC-120/0.8 型氮气纯化装置", 1, "氮气纯化", false, []);
+        addSaleInternal("广东省", "阳江市同德工业气体有限公司", "RZ-DYC-20C 型氮气纯化装置", 1, "氮气纯化", false, []);
+        addSaleInternal("广东省", "阳江市同德工业气体有限公司", "RZ-YA-20C 型氩气纯化装置", 1, "氩气纯化", false, []);
+        addSaleInternal("广东省", "先进能源科学与技术广东省实验室", "RZ-DYC-12D 型全自动氮气纯化设备", 1, "氮气纯化", false, []);
+        addSaleInternal("广东省", "珠海九六三精工科技有限公司", "RZ-DYC-4D/6N 型全自动氮气纯化装置", 1, "氮气纯化", false, []);
+        addSaleInternal("广东省", "广州有色金属研究院", "RZ-QYC-10/0.8 型氢气纯化装置", 1, "氢气纯化", false, []);
+        addSaleInternal("广东省", "广东冠电科技股份有限公司", "RZ-QYC-30D/5N 型氢气纯化设备", 1, "氢气纯化", false, []);
+        addSaleInternal("广东省", "东莞峻嘉自动化设备有限公司", "RZ-QYC-1D/5N 全自动氢气纯化设备", 1, "氢气纯化", false, []);
+        addSaleInternal("广东省", "广东兰氢能源科技有限公司", "RZ-QYC-40D/5N 防爆型氢气纯化设备", 1, "氢气纯化", false, []);
+        addSaleInternal("广东省", "东莞瑞邦制氮净化设备有限公司", "RZ-HN-20 型氢氮混气装置", 2, "混合配气", false, []);
+        addSaleInternal("广东省", "中山利明光电科技股份有限公司", "RZ-HN-20 型氢氮混气装置", 1, "混合配气", false, []);
+        addSaleInternal("青海省", "青海桥头铝电股份有限公司", "RZ-YA-20C 型氩气纯化装置", 1, "氩气纯化", false, []);
+        addSaleInternal("青海省", "青海桥头铝电股份有限公司", "RZ-YA-4C 氩气净化装置", 1, "氩气纯化", false, []);
+        addSaleInternal("四川省", "绵阳市瑞联特科技研发有限责任公司", "RZYA-10C 氩气纯化装置", 1, "氩气纯化", false, []);
+        addSaleInternal("四川省", "绵阳市瑞联特科技研发有限责任公司", "RZ-QYC-10C 氮气纯化装置", 1, "氮气纯化", false, []);
+        addSaleInternal("四川省", "四川均腾气体设备科技有限公司", "RZ-YAG-200C 型氩气纯化设备（高压）", 1, "氩气纯化", false, []);
+        addSaleInternal("四川省", "四川均腾气体设备科技有限公司", "RZ-DYG-200C 型氮气纯化设备（高压）", 1, "氮气纯化", false, []);
+        addSaleInternal("四川省", "成都市温江区凯力气体有限公司", "RZ-YA-200G 型氩气纯化设备（高压）", 1, "氩气纯化", false, []);
+        addSaleInternal("四川省", "成都市温江区凯力气体有限公司", "RZ-DYC-200G 型氮气纯化设备（高压）", 1, "氮气纯化", false, []);
+        addSaleInternal("四川省", "眉山市彭山区鑫源气体有限公司", "EGP100-R-HPOU-氩气过滤器", 1, "氩气纯化", false, []);
+        addSaleInternal("四川省", "眉山市彭山区鑫源气体有限公司", "RZ-DYC-200G 高压氮气过滤器", 1, "氮气纯化", false, []);
+        addSaleInternal("四川省", "遂宁市广润氧气有限公司", "RZ-YA-200G 型高压氩气过滤器", 1, "氩气纯化", false, []);
+        addSaleInternal("四川省", "广安康源气体有限公司", "RZ-YA-50G 型高压氩气过滤器", 1, "氩气纯化", false, []);
+        addSaleInternal("四川省", "四川农科院土壤研究所", "RZ-YA-4C 氩气净化装置", 1, "氩气纯化", false, []);
+        addSaleInternal("四川省", "成都东方仪器有限公司", "RZ-YA-4C 型氩气净化机", 1, "氩气纯化", false, []);
+        addSaleInternal("四川省", "攀枝花市恒源顺科技有限公司", "RZ-YA-4D 型氩气净化机", 2, "氩气纯化", false, []);
+        addSaleInternal("四川省", "成都鑫双力机电设备有限公司", "RZ-YA-4D 型全自动氩气净化机", 1, "氩气纯化", false, []);
+        addSaleInternal("四川省", "成都万核机械设备有限公司", "RZ-YA-4D 型氩气净化机", 1, "氩气纯化", false, []);
+        addSaleInternal("四川省", "绵阳天明新能源科技有限公司", "RZ-DYC-150 型氮气纯化装置", 1, "氮气纯化", false, []);
+        addSaleInternal("四川省", "绵阳市瑞联特科技研发有限责任公司", "RZ-YA-10C 氩气纯化装置", 1, "氩气纯化", false, []);
+        addSaleInternal("四川省", "绵阳市瑞联特科技研发有限责任公司", "RZ-DYC-10C 型氮气纯化装置", 1, "氮气纯化", false, []);
+        addSaleInternal("四川省", "成都阿尔法金属材料有限公司", "RZ-DYC-4D 型氮气净化器", 1, "氮气纯化", false, []);
+        addSaleInternal("四川省", "眉山市彭山区鑫源气体有限公司", "RZ-DYC-20D/6N 低压氮气过滤器", 1, "氮气纯化", false, []);
+        addSaleInternal("四川省", "成都量深环保科技有限公司", "JH-10 型全自动氢气净化设备", 1, "氢气纯化", false, []);
+        addSaleInternal("四川省", "四川南光真空科技有限公司", "RZ-QYC-2.0 型全自动氢气纯化设备", 1, "氢气纯化", false, []);
+        addSaleInternal("四川省", "四川南光真空科技有限公司", "RZ-QYC-6D 型全自动氢气纯化设备", 2, "氢气纯化", false, []);
+        addSaleInternal("四川省", "泸州长江机械有限公司", "RZ-AGC-80D 防爆型氨气纯化设备（全自动）", 1, "氨气纯化", false, []);
+        addSaleInternal("内蒙古自治区", "鄂托克棋盘井晶华燃气厂", "RZ-YA-30C 氩气纯化装置", 1, "氩气纯化", false, []);
+        addSaleInternal("内蒙古自治区", "鄂托克棋盘井晶华燃气厂", "RZ-DYC-30 氮气纯化装置", 1, "氮气纯化", false, []);
+        addSaleInternal("内蒙古自治区", "赤峰吉泰工业气体", "RZ-DYC-30 氮气纯化装置", 1, "氮气纯化", false, []);
+        addSaleInternal("内蒙古自治区", "鄂托克棋盘井晶华燃气厂", "RZ-CYC-30C 二氧化碳纯化装置", 1, "二氧化碳纯化", false, []);
+        addSaleInternal("内蒙古自治区", "科右中旗新星氧气乙炔厂", "RZ-YA-20C 型氩气纯化装置", 1, "氩气纯化", false, []);
+        addSaleInternal("内蒙古自治区", "乌兰浩特君喆气体有限公司", "RZ-YA-20C 型氩气纯化装置", 1, "氩气纯化", false, []);
+        addSaleInternal("内蒙古自治区", "乌兰浩特君喆气体有限公司", "RZ-DYC-20C 氮气纯化装置", 1, "氮气纯化", false, []);
+        addSaleInternal("内蒙古自治区", "霍林郭勒鑫源气体有限公司", "RZ-YA-20D/6N 型全自动氩气纯化设备", 1, "氩气纯化", false, []);
+        addSaleInternal("内蒙古自治区", "阿拉善左旗东兴工贸有限责任公司", "RZ-YAG-200C 型氩气纯化设备（高压）", 1, "氩气纯化", false, []);
+        addSaleInternal("内蒙古自治区", "阿拉善左旗东兴工贸有限责任公司", "RZ-DYG-200C 型氮气纯化设备（高压）", 1, "氮气纯化", false, []);
+        addSaleInternal("内蒙古自治区", "武川县宏峰气业有限公司", "RZ-YAG-200C 型氩气纯化设备（高压）", 1, "氩气纯化", false, []);
+        addSaleInternal("内蒙古自治区", "武川县宏峰气业有限公司", "RZ-DYG-200C 型氮气纯化设备（高压）", 1, "氮气纯化", false, []);
+        addSaleInternal("内蒙古自治区", "内蒙古英慕科贸有限公司", "RZ-YA-4C 型氩气净化机", 1, "氩气纯化", false, []);
+        addSaleInternal("内蒙古自治区", "赤峰远联钢铁有限责任公司", "RZ-LY-A300ZD 型氩气净化机", 1, "氩气纯化", false, []);
+        addSaleInternal("内蒙古自治区", "乌海中奥吉仪器仪表有限公司", "RZ-DYC-10D 型氮气纯化装置", 1, "氮气纯化", false, []);
+        addSaleInternal("内蒙古自治区", "内蒙神华化工集团", "RZ-DYC-10D 型氮气纯化装置", 1, "氮气纯化", false, []);
+        addSaleInternal("内蒙古自治区", "科右中旗新星氧气乙炔厂", "RZ-DYC-20 型氮气纯化装置", 1, "氮气纯化", false, []);
+        addSaleInternal("内蒙古自治区", "霍林郭勒鑫源气体有限公司", "RZ-DYG-200C 型氮气纯化设备（高压）", 1, "氮气纯化", false, []);
+        addSaleInternal("内蒙古自治区", "丰镇市欣源液化气有限责任公司", "RZ-DY-200G 型氮气纯化设备（高压）", 1, "氮气纯化", false, []);
+        addSaleInternal("内蒙古自治区", "鄂尔多斯市龙洲气体有限责任公司", "RA-CO2-20 型二氧化碳纯化装置", 1, "二氧化碳纯化", false, []);
+        addSaleInternal("黑龙江省", "哈尔滨黎明气体有限公司", "RZ-YA-20C 型氩气纯化装置", 1, "氩气纯化", false, []);
+        addSaleInternal("黑龙江省", "哈尔滨鼎新工业气体有限公司", "RZ-YA-20C 型氩气纯化装置", 1, "氩气纯化", false, []);
+        addSaleInternal("黑龙江省", "哈尔滨鼎新工业气体有限公司", "RZ-DYC-20C 氮气纯化装置", 1, "氮气纯化", false, []);
+        addSaleInternal("黑龙江省", "哈尔滨晶彩材料科技有限公司", "RZ-YA-5D 氩气净化机", 1, "氩气纯化", false, []);
+        addSaleInternal("黑龙江省", "哈尔滨黎明气体有限公司", "RZ-YA-20D/6N 型全自动超纯氩气纯化设备", 1, "氩气纯化", false, []);
+        addSaleInternal("黑龙江省", "哈尔滨铸城科技有限公司", "RZ-YA-4C 氩气净化装置", 1, "氩气纯化", false, []);
+        addSaleInternal("黑龙江省", "大庆金恒润业仪器仪表有限公司", "RZ-YA-4D 型氩气净化机", 1, "氩气纯化", false, []);
+        addSaleInternal("黑龙江省", "大庆高新区华龙祥化工有限公司", "RZ-DYC-100D/5.5N 全自动高纯氮气纯化设备", 1, "氮气纯化", false, []);
+        addSaleInternal("黑龙江省", "哈尔滨晶体管厂", "RZ-QYC-2.0/0.8 氢气纯化装置", 1, "氢气纯化", false, []);
+        addSaleInternal("黑龙江省", "哈尔滨晶体管厂", "YCG-2 型氧气纯化装置", 1, "氧气纯化", false, []);
+        addSaleInternal("黑龙江省", "哈尔滨晶体管厂", "RZ-YYC-1 型氧气净化塔", 1, "氧气纯化", false, []);
+        addSaleInternal("黑龙江省", "安达瑞轩化工有限公司", "RZ-20D 型全自动氨气干燥设备", 1, "氨气纯化", false, []);
+        addSaleInternal("黑龙江省", "哈尔滨商业大学", "RZ-HP-20C 型自动混合机", 1, "混合配气", false, []);
+        addSaleInternal("湖南省", "长沙长钢气体有限公司", "RZ-YA-20C 型氩气纯化装置", 1, "氩气纯化", false, []);
+        addSaleInternal("湖南省", "益阳中大气体有限公司", "RZ-YA-20C 型氩气纯化装置", 1, "氩气纯化", false, []);
+        addSaleInternal("湖南省", "益阳中大气体有限公司", "RZ-DYC-20C 型氮气纯化装置", 1, "氮气纯化", false, []);
+        addSaleInternal("湖南省", "宁乡中胜气体有限公司", "RZ-YA-20C 型氩气纯化装置", 1, "氩气纯化", false, []);
+        addSaleInternal("湖南省", "宁乡中胜气体有限公司", "RZ-DYC-20C 型氮气纯化装置", 1, "氮气纯化", false, []);
+        addSaleInternal("湖南省", "湖南铠欣新材料科技有限公司", "RZ-YA-2D/6N 型全自动超纯氩气净化机", 1, "氩气纯化", false, []);
+        addSaleInternal("湖南省", "湖南铠欣新材料科技有限公司", "RZ-QYC-2D/6N 型全自动超纯氢气净化机", 1, "氢气纯化", false, []);
+        addSaleInternal("湖南省", "湖南省华京粉体材料有限公司", "RZ-YAGC-4D 全自动氩气干燥装置", 1, "氩气纯化", false, []);
+        addSaleInternal("湖南省", "株洲红亚电热设备有限公司", "RZ-GYA-4 氩气净化机", 1, "氩气纯化", false, []);
+        addSaleInternal("湖南省", "株洲红亚电热设备有限公司", "RZ-YA-40D/T 全自动氩气净化装置", 1, "氩气纯化", false, []);
+        addSaleInternal("湖南省", "湖南顶立科技有限公司", "RZ-YA-110D/T 型全自动氩气纯化设备", 1, "氩气纯化", false, []);
+        addSaleInternal("湖南省", "湖南顶立科技有限公司", "RZ-DYC-250D/T 型全自动氮气纯化设备", 1, "氮气纯化", false, []);
+        addSaleInternal("湖南省", "株洲晨昕中高频设备有限公司", "RZ-YA-6C/半自动氩气净化机含分析仪", 2, "氩气纯化", false, []);
+        addSaleInternal("湖南省", "湖南九山半导体科技有限公司", "RZ-YA-12D/6N 型全自动超纯氩气纯化设备", 1, "氩气纯化", false, []);
+        addSaleInternal("湖南省", "湖南九山半导体科技有限公司", "RZ-QYC-50D/6N 型全自动超纯氢气纯化设备", 1, "氢气纯化", false, []);
+        addSaleInternal("湖南省", "湖南邦瑞新材料有限公司", "RZ-YA-60D/6N-EXD 超纯氩气纯化设备", 1, "氩气纯化", false, []);
+        addSaleInternal("湖南省", "湖南邦瑞新材料有限公司", "RZ-QYC-6D/6N-EXD 超纯氢气纯化设备", 1, "氢气纯化", false, []);
+        addSaleInternal("湖南省", "宁乡市腾达气体有限公司", "RZ-YA-200G 型氩气纯化设备（高压）", 1, "氩气纯化", false, []);
+        addSaleInternal("湖南省", "宁乡市腾达气体有限公司", "RZ-DYC-200G 型氮气纯化设备（高压）", 1, "氮气纯化", false, []);
+        addSaleInternal("湖南省", "临湘市光明气体厂", "RZ-YA-200G 型氩气纯化设备（高压）", 1, "氩气纯化", false, []);
+        addSaleInternal("湖南省", "益阳中大气体有限公司", "RZ-YA-200G 型氩气纯化设备（高压）", 1, "氩气纯化", false, []);
+        addSaleInternal("湖南省", "宁乡中胜气体有限公司", "RZ-YAG-200C 型氩气纯化设备（高压）", 1, "氩气纯化", false, []);
+        addSaleInternal("湖南省", "宁乡中胜气体有限公司", "RZ-DYG-200C 型氮气纯化设备（高压）", 1, "氮气纯化", false, []);
+        addSaleInternal("湖南省", "湖南仁瑞科技有限公司", "RZ-YA-6D 氩气净化机", 1, "氩气纯化", false, []);
+        addSaleInternal("湖南省", "株洲广吉昌科技有限公司", "RZ-YA-4C 氩气净化装置", 1, "氩气纯化", false, []);
+        addSaleInternal("湖南省", "株洲晨昕中高频设备有限公司", "RZ-YA-4C 氩气净化装置", 1, "氩气纯化", false, []);
+        addSaleInternal("湖南省", "株洲金瑞中高频设备有限公司", "RZ-YA-4C 半自动氩气净化装置", 268, "氩气纯化", false, []);
+        addSaleInternal("湖南省", "株洲金瑞中高频设备有限公司", "RZ-YA-4C 型氩气净化机", 2, "氩气纯化", false, []);
+        addSaleInternal("湖南省", "株洲金瑞中高频设备有限公司", "RZ-YA-4C 型单塔氩气净化机", 6, "氩气纯化", false, []);
+        addSaleInternal("湖南省", "中南大学", "RZ-YA-4C 型氩气净化机", 1, "氩气纯化", false, []);
+        addSaleInternal("湖南省", "湖南宏拓铝业有限公司", "RZ-YA-4C 型氩气净化机", 1, "氩气纯化", false, []);
+        addSaleInternal("湖南省", "株洲晨昕中高频设备有限公司", "RZ-YA-4C 型氩气净化机（不除氮）", 1, "氩气纯化", false, []);
+        addSaleInternal("湖南省", "株洲金瑞中高频设备有限公司", "RZ-YA-4C 型氩气净化机单塔", 1, "氩气纯化", false, []);
+        addSaleInternal("湖南省", "株洲晨昕中高频设备有限公司", "RZ-YA-4C 型氩气净化机", 1, "氩气纯化", false, []);
+        addSaleInternal("湖南省", "汉德车桥（株洲）齿轮有限公司", "RZ-YA-4D 型氩气净化机", 1, "氩气纯化", false, []);
+        addSaleInternal("湖南省", "湖南烯瑞自动化设备有限公司", "RZ-YA-4 型双路输出氩气净化机", 1, "氩气纯化", false, []);
+        addSaleInternal("湖南省", "湖南烯瑞自动化设备有限公司", "RZ-YA-4C 型氩气净化机", 2, "氩气纯化", false, []);
+        addSaleInternal("湖南省", "湖南铠欣新材料科技有限公司", "RZ-YA-4D 全自动超纯氩气净化机", 1, "氩气纯化", false, []);
+        addSaleInternal("湖南省", "湖南艾普德工业技术有限公司", "RZ-YA-4D 型氩气净化机", 1, "氩气纯化", false, []);
+        addSaleInternal("湖南省", "湖南省华京粉体材料有限公司", "RZ-YA-4D 型全自动氩气净化机", 1, "氩气纯化", false, []);
+        addSaleInternal("湖南省", "株洲晨昕中高频设备有限公司", "RZ-YA-10D 型氩气净化机", 1, "氩气纯化", false, []);
+        addSaleInternal("湖南省", "株洲鑫阳热处理设备有限公司", "RZ-YA-4C 型氩气净化机", 1, "氩气纯化", false, []);
+        addSaleInternal("湖南省", "长沙市西谛自动化技术有限公司", "RZ-YA-4C 型氩气净化机", 1, "氩气纯化", false, []);
+        addSaleInternal("湖南省", "株洲广吉昌科技有限公司", "RZ-YA-4D 型全自动氩气净化机", 1, "氩气纯化", false, []);
+        addSaleInternal("湖南省", "株洲弗拉德科技有限公司", "RZ-YA-4C 型氩气净化机", 1, "氩气纯化", false, []);
+        addSaleInternal("湖南省", "湖南艾普德工业技术有限公司", "RZ-YA-4D 型全自动氩气净化机", 1, "氩气纯化", false, []);
+        addSaleInternal("湖南省", "株洲和创中高频设备有限公司", "RZ-YA-4 型氩气净化机", 1, "氩气纯化", false, []);
+        addSaleInternal("湖南省", "湖南烯瑞自动化设备有限公司", "RZ-YA-4C 单路氩气净化机", 1, "氩气纯化", false, []);
+        addSaleInternal("湖南省", "株洲广吉昌科技有限公司", "RZ-YA-4D 型氩气净化机", 1, "氩气纯化", false, []);
+        addSaleInternal("湖南省", "株洲晨昕中高频设备有限公司", "RZ-YA-6C 型氩气净化机", 1, "氩气纯化", false, []);
+        addSaleInternal("湖南省", "湖南东泉铸造有限公司", "RZ-YA-4C 型氩气净化机", 1, "氩气纯化", false, []);
+        addSaleInternal("湖南省", "株洲远航工业炉科技有限公司", "RZ-YA-4C 型氩气净化机", 1, "氩气纯化", false, []);
+        addSaleInternal("湖南省", "株洲晨昕中高频设备有限公司", "RZ-YA-4C 氩气净化机 480V 出口", 1, "氩气纯化", false, []);
+        addSaleInternal("湖南省", "株洲鑫韵科技发展有限公司", "RZ-YA-4C 型单塔氩气净化机", 1, "氩气纯化", false, []);
+        addSaleInternal("湖南省", "株洲晨昕中高频设备有限公司", "RZ-YA-4C 型氩气净化机 380V 出口", 1, "氩气纯化", false, []);
+        addSaleInternal("湖南省", "湖南常德海纳贸易有限公司", "RZ-DYC-1II 型氮气纯化装置", 2, "氮气纯化", false, []);
+        addSaleInternal("湖南省", "湖南华南光电（集团）有限责任公司", "RZ-DYC-III 1 型氮气净化系统", 1, "氮气纯化", false, []);
+        addSaleInternal("湖南省", "长沙韶光半导体有限公司", "RZ-DYC-20D 型全自动氮气纯化设备", 1, "氮气纯化", false, []);
+        addSaleInternal("湖南省", "长沙超创电子科技有限公司", "RZ-DYC-III 1 型氮气净化系统", 1, "氮气纯化", false, []);
+        addSaleInternal("湖南省", "宁乡市腾达气体有限公司", "RZ-YAG-200C 型氩气纯化设备（高压）", 1, "氩气纯化", false, []);
+        addSaleInternal("湖南省", "宁乡市腾达气体有限公司", "RZ-DYG-200C 型氮气纯化设备（高压）", 1, "氮气纯化", false, []);
+        addSaleInternal("湖南省", "益阳中大气体有限公司", "RZ-DYC-200G 型高压氮气纯化设备", 1, "氮气纯化", false, []);
+        addSaleInternal("湖南省", "湖南畅安气体有限公司", "RZ-DYC-30G 高压氮气纯化设备", 1, "氮气纯化", false, []);
+        addSaleInternal("湖南省", "湖南铠欣新材料科技有限公司", "RZ-QYC-2D/6N 氢气纯化设备", 1, "氢气纯化", false, []);
+        addSaleInternal("湖南省", "湖南铠欣新材料科技有限公司", "RZ-YA-2D/6N 氩气纯化设备", 1, "氩气纯化", false, []);
+        addSaleInternal("湖南省", "湖南铠欣新材料科技有限公司", "RZ-YA-12D/6N 型全自动超纯氩气净化机", 1, "氩气纯化", false, []);
+        addSaleInternal("湖南省", "湖南铠欣新材料科技有限公司", "RZ-QYC-12D/6N 型全自动超纯氢气净化机", 1, "氢气纯化", false, []);
+        addSaleInternal("湖南省", "株洲科能新材料股份有限公司", "RZ-QYC-10D/6N 型防爆型氢气纯化设备", 1, "氢气纯化", false, []);
+        addSaleInternal("湖南省", "株洲科能新材料股份有限公司", "RZ-QYC-15D/6N 型防爆型氢气纯化设备", 1, "氢气纯化", false, []);
+        addSaleInternal("湖南省", "湖南岳阳 IO 史密斯公司", "RZ-HEHNC-60 型氦气回收纯化装置", 1, "氦气纯化", false, []);
+        addSaleInternal("湖南省", "湖南爱他浦工业技术有限公司", "RZ-AGC-100D 全自动氨气纯化设备", 1, "氨气纯化", false, []);
+        addSaleInternal("湖南省", "湖南锐林新能源科技有限公司", "RZ-AGC-20D 氨气纯化设备", 1, "氨气纯化", false, []);
+        addSaleInternal("安徽省", "安徽省郎溪县双建气体有限公司", "RZ-YA-20C 型氩气纯化装置", 1, "氩气纯化", false, []);
+        addSaleInternal("安徽省", "安徽省郎溪县双建气体有限公司", "RZ-DYC-20C 氮气纯化装置", 1, "氮气纯化", false, []);
+        addSaleInternal("安徽省", "六安市大力气体有限责任公司", "RZ-YA-20C 型氩气纯化装置", 1, "氩气纯化", false, []);
+        addSaleInternal("安徽省", "六安市大力气体有限责任公司", "RZ-DYC-20C 型氮气纯化装置", 1, "氮气纯化", false, []);
+        addSaleInternal("安徽省", "六安市大力气体有限责任公司", "RZ-CO2-20Ш型二氧化碳纯化装置", 1, "二氧化碳纯化", false, []);
+        addSaleInternal("安徽省", "广德县顺通气体有限公司", "RZ-YA-20C 型氩气纯化装置", 1, "氩气纯化", false, []);
+        addSaleInternal("安徽省", "广德县顺通气体有限公司", "RZ-DYC-20C 型氮气纯化装置", 1, "氮气纯化", false, []);
+        addSaleInternal("安徽省", "马鞍山新桦气体有限公司", "RZ-YAG-200C 型氩气纯化设备（高压）", 1, "氩气纯化", false, []);
+        addSaleInternal("安徽省", "安庆市六方气体产品有限责任公司", "RZ-YA-60D/6N 型全自动超纯氩气纯化设备", 1, "氩气纯化", false, []);
+        addSaleInternal("安徽省", "安庆市六方气体产品有限责任公司", "RZ-DYC-50D/6N 型全自动超纯氮气纯化设备", 1, "氮气纯化", false, []);
+        addSaleInternal("安徽省", "池州市福星气体有限公司", "RZ-YA-20D 全自动超纯氩气纯化设备", 1, "氩气纯化", false, []);
+        addSaleInternal("安徽省", "池州市福星气体有限公司", "RZ-DYC-200G 高压超纯氮气过滤器", 1, "氮气纯化", false, []);
+        addSaleInternal("安徽省", "庐江县通达气体有限公司", "RZ-YA-200G 型高压氩气过滤器", 1, "氩气纯化", false, []);
+        addSaleInternal("安徽省", "庐江县通达气体有限公司", "RZ-DYC-200G 型高压氮气过滤器", 1, "氮气纯化", false, []);
+        addSaleInternal("安徽省", "天长市天鑫气体有限公司", "RZ-YA-200G 型高压氩气过滤器", 1, "氩气纯化", false, []);
+        addSaleInternal("安徽省", "天长市天鑫气体有限公司", "RZ-DYC-200G 型高压氮气过滤器", 1, "氮气纯化", false, []);
+        addSaleInternal("安徽省", "庐江县通达气体有限公司", "RZ-CO2-35D/5N 高纯二氧化碳纯化器", 1, "二氧化碳纯化", false, []);
+        addSaleInternal("安徽省", "芜湖和蓄机械股份有限公司", "RZ-YA-4C 氩气净化装置", 1, "氩气纯化", false, []);
+        addSaleInternal("安徽省", "安徽三方耐磨股份有限公司", "RZ-YA-4C 氩气净化装置", 1, "氩气纯化", false, []);
+        addSaleInternal("安徽省", "安徽宁国市新高新钢球衬板有限公司", "RZ-YA-4C 氩气净化装置", 1, "氩气纯化", false, []);
+        addSaleInternal("安徽省", "安徽省辉煌机械制造有限公司", "RZ-YA-4C 氩气净化装置", 1, "氩气纯化", false, []);
+        addSaleInternal("安徽省", "中国科学院合肥物质科学研究院", "RZ-YA-4C 氩气净化装置", 1, "氩气纯化", false, []);
+        addSaleInternal("安徽省", "天长缸盖有限公司", "RZ-YA-4C 型氩气净化机", 1, "氩气纯化", false, []);
+        addSaleInternal("安徽省", "天长缸盖有限公司", "RZ-YA-4D 型氩气净化机", 1, "氩气纯化", false, []);
+        addSaleInternal("安徽省", "中国科学院合肥物质科学研究院", "RZ-YA-4D 型氩气净化机", 1, "氩气纯化", false, []);
+        addSaleInternal("安徽省", "广德亚太铸造有限公司", "RZ-YA-4D 型氩气净化机", 1, "氩气纯化", false, []);
+        addSaleInternal("安徽省", "宁国市一正机械有限公司", "RZ-YA-4C 型氩气净化机", 1, "氩气纯化", false, []);
+        addSaleInternal("安徽省", "宁国市中意耐磨材料有限公司", "RZ-YA-4C 型氩气净化机", 1, "氩气纯化", false, []);
+        addSaleInternal("安徽省", "安徽宁国市新高新钢球衬板有限公司", "RZ-YA-4D 型氩气净化机", 1, "氩气纯化", false, []);
+        addSaleInternal("安徽省", "全椒蓝图铸业有限公司", "RZ-YA-4C 型氩气净化机", 1, "氩气纯化", false, []);
+        addSaleInternal("安徽省", "安徽宁国市新高新钢球衬板有限公司", "RZ-YA-4D 型全自动氩气净化机", 1, "氩气纯化", false, []);
+        addSaleInternal("安徽省", "合肥俊麟科技有限公司", "RZ-YA-4C 型氩气净化机", 1, "氩气纯化", false, []);
+        addSaleInternal("安徽省", "合肥俊麟科技有限公司", "RZ-YYC-4C 型氧气纯化装置", 1, "氧气纯化", false, []);
+        addSaleInternal("安徽省", "合肥俊麟科技有限公司", "RZ-DYC-5C 型氮气纯化装置", 1, "氮气纯化", false, []);
+        addSaleInternal("安徽省", "安徽涌诚机械有限公司", "RZ-YA-4D 型氩气净化机", 1, "氩气纯化", false, []);
+        addSaleInternal("安徽省", "安徽涌诚机械有限公司", "RZ-YA-4D 型全自动氩气净化机", 1, "氩气纯化", false, []);
+        addSaleInternal("安徽省", "安徽省宁国诚信耐磨材料有限公司", "RZ-YA-4D 型全自动氩气净化机", 1, "氩气纯化", false, []);
+        addSaleInternal("安徽省", "安徽泰昌特殊合金制造有限公司", "RZ-YA-4D 型全自动氩气净化机", 1, "氩气纯化", false, []);
+        addSaleInternal("安徽省", "安徽拓美威铜业集团有限公司", "RZ-YA-4D 型全自动氩气净化机", 1, "氩气纯化", false, []);
+        addSaleInternal("安徽省", "安徽省宁国市宁沪钢球有限公司", "RZ-YA-4D 型氩气净化机", 1, "氩气纯化", false, []);
+        addSaleInternal("安徽省", "蚌埠市凯盛金属材料有限公司", "RZ-YA-4D 型氩气净化机", 1, "氩气纯化", false, []);
+        addSaleInternal("安徽省", "安徽鑫汇达新材料科技有限公司", "RZ-YA-4D 型氩气净化机", 1, "氩气纯化", false, []);
+        addSaleInternal("安徽省", "芜湖市海源铜业有限责任公司", "RZ-YA-4C 型氩气净化机", 1, "氩气纯化", false, []);
+        addSaleInternal("安徽省", "安徽盛源鑫祥新材料科技有限公司", "RZ-YA-4D 型氩气净化机", 1, "氩气纯化", false, []);
+        addSaleInternal("安徽省", "芜湖仁龙特种气体有限公司", "RZ-YA-4C 型氩气净化机（3MPA）", 1, "氩气纯化", false, []);
+        addSaleInternal("安徽省", "霍山忠祥气体有限公司", "RZ-DYC-200G 型高压氮气纯化设备", 1, "氮气纯化", false, []);
+        addSaleInternal("安徽省", "安徽省脉安医药科技有限公司", "RZ-DYC-50G 型高压氮气过滤器", 1, "氮气纯化", false, []);
+        addSaleInternal("安徽省", "安徽达济动力科技有限公司", "RZ-AGC-40D-EXD 防爆型全自动氨气纯化设备", 1, "氨气纯化", false, []);
+        addSaleInternal("安徽省", "池州华钛半导体有限公司", "RZ-HN-10 型氢氮混气装置", 1, "混合配气", false, []);
+        addSaleInternal("安徽省", "池州睿成微电子有限公司", "RZ-HN-10 型氢氮混气装置", 1, "混合配气", false, []);
+        addSaleInternal("安徽省", "池州泰美达微电子有限公司", "RZ-HN-10 型氢氮混气装置", 1, "混合配气", false, []);
+        addSaleInternal("安徽省", "池州华宇微电子有限公司", "RZ-HN-10 型氢氮混气装置", 1, "混合配气", false, []);
+        addSaleInternal("安徽省", "池州华宇电子科技有限公司", "RZ-HN-120D 型氢氮混配装置", 1, "混合配气", false, []);
+        addSaleInternal("安徽省", "池州华宇电子科技有限公司（一备一用）", "RZ-HN-120D 型氢氮混配装置", 1, "混合配气", false, []);
+        addSaleInternal("安徽省", "富芯微电子有限公司", "RZ-HP-48D 型全自动氢氮混配装置", 1, "混合配气", false, []);
+        addSaleInternal("安徽省", "池州巨成电子科技有限公司", "RZ-HP-40C 型自动氢氮混合配气设备", 1, "混合配气", false, []);
+        addSaleInternal("山西省", "运城市盐湖区北相东鑫氩气站", "RZ-YA-20C 型氩气纯化装置", 1, "氩气纯化", false, []);
+        addSaleInternal("山西省", "晋城市安恒志工业气体", "RZ-YA-200C 型氩气纯化装置", 1, "氩气纯化", false, []);
+        addSaleInternal("山西省", "运城市盐湖区北相东鑫氩气站", "RZ-DYC-20C 氮气纯化装置", 1, "氮气纯化", false, []);
+        addSaleInternal("山西省", "山西立恒钢铁股份有限公司", "RZ-YA-4C 氩气净化装置", 2, "氩气纯化", false, []);
+        addSaleInternal("山西省", "山西德泰兴业科贸有限公司", "RZ-YA-4C 氩气净化装置", 1, "氩气纯化", false, []);
+        addSaleInternal("山西省", "山西兴业精机机械设备有限责任公司", "RZ-YA-4D 型氩气净化机", 1, "氩气纯化", false, []);
+        addSaleInternal("山西省", "侯马市恒利化工有限公司", "RZ-YA-4C 型氩气净化机", 1, "氩气纯化", false, []);
+        addSaleInternal("山西省", "文水县园鑫钢管有限公司", "RZ-YA-4D 型氩气净化机", 1, "氩气纯化", false, []);
+        addSaleInternal("山西省", "山西东胜科星装饰工程有限公司", "RZ-YA-4C 型氩气净化机", 1, "氩气纯化", false, []);
+        addSaleInternal("山西省", "山西明纳能源科技有限公司", "RZ-YA-4C 型氩气净化机", 1, "氩气纯化", false, []);
+        addSaleInternal("山西省", "中国科学院山西煤炭化学研究所", "RZ-YA-4C 气体净化机", 1, "气体纯化", false, []);
+        addSaleInternal("山西省", "山西康帕斯工业设备安装有限公司", "RZ-AGC-100D 全自动氨气纯化设备", 1, "氨气纯化", false, []);
+        addSaleInternal("山西省", "山西华耀亿嘉集成电路有限公司", "RZ-HN-120D/EXD 全自动氢氮混配装置", 2, "混合配气", false, []);
+        addSaleInternal("贵州省", "贵州梅岭电源有限公司（贵州德谱科技有限公司）", "RZ-YA-8C 氩气纯化装置", 1, "氩气纯化", false, []);
+        addSaleInternal("贵州省", "贵州梅岭电源有限公司（贵州德谱科技有限公司）", "RZ-DYC-8 氮气纯化装置", 1, "氮气纯化", false, []);
+        addSaleInternal("贵州省", "福泉市兴隆江源氧气厂", "RZ-YAG-200C 型氩气纯化设备（高压）", 1, "氩气纯化", false, []);
+        addSaleInternal("贵州省", "福泉市兴隆江源氧气厂", "RZ-DYG-200C 型氮气纯化设备（高压）", 1, "氮气纯化", false, []);
+        addSaleInternal("贵州省", "福泉市兴隆江源氧气厂", "RZ-YYC-20D/5N 型全自动氧气纯化设备", 1, "氧气纯化", false, []);
+        addSaleInternal("贵州省", "贵州精立航太科技有限公司", "RZ-YA-10D/5N 型全自动氩气纯化设备", 1, "氩气纯化", false, []);
+        addSaleInternal("贵州省", "贵州贵而安特种气体有限公司", "RZ-YA-35D/6N 型超纯氩气纯化设备", 1, "氩气纯化", false, []);
+        addSaleInternal("贵州省", "贵州贵而安特种气体有限公司", "RZ-DYC-35D/6N 型超纯氮气纯化设备", 1, "氮气纯化", false, []);
+        addSaleInternal("贵州省", "贵州贵而安特种气体有限公司", "RZ-YYC-35D/5N-EXD 型高纯氧气纯化设备", 1, "氧气纯化", false, []);
+        addSaleInternal("贵州省", "贵州贵而安特种气体有限公司", "RZ-YA-35D/6N 型全自动超纯氩气纯化设备", 1, "氩气纯化", false, []);
+        addSaleInternal("贵州省", "贵州贵而安特种气体有限公司", "RZ-DYC-35D/6N 型全自动超纯氮气纯化设备", 1, "氮气纯化", false, []);
+        addSaleInternal("贵州省", "贵州贵而安特种气体有限公司", "RZ-YYC-35D/5N-EXD 型全自动高纯氧气纯化设备", 1, "氧气纯化", false, []);
+        addSaleInternal("贵州省", "遵义红润机电有限公司", "RZ-YA-4C 氩气净化装置", 1, "氩气纯化", false, []);
+        addSaleInternal("贵州省", "贵州遵义梅岭电源有限公司", "RZ-YA-4C 氩气净化装置", 2, "氩气纯化", false, []);
+        addSaleInternal("贵州省", "贵州振华风光半导体有限公司", "RZ-DYC-10 型氮气纯化装置", 1, "氮气纯化", false, []);
+        addSaleInternal("贵州省", "贵州振华风光半导体有限公司", "RZ-DYC-8III 型氮气纯化装置", 1, "氮气纯化", false, []);
+        addSaleInternal("贵州省", "贵州振华风光半导体有限公司", "RZ-DYC-10/5.5N 高纯氮气纯化装置", 1, "氮气纯化", false, []);
+        addSaleInternal("贵州省", "贵州梅岭电源有限公司", "RZ-DYC-8C 氮气纯化装置", 1, "氮气纯化", false, []);
+        addSaleInternal("贵州省", "贵州梅岭电源有限公司", "RZ-YA-8C 型氩气纯化装置", 1, "氩气纯化", false, []);
+        addSaleInternal("贵州省", "贵阳瑞晟化玻有限公司", "RZ-DYC-10C 氮气纯化设备", 1, "氮气纯化", false, []);
+        addSaleInternal("贵州省", "贵阳瑞晟化玻有限公司", "RZ-DYC-1.5C 氮气纯化设备", 1, "氮气纯化", false, []);
+        addSaleInternal("贵州省", "贵州航天林泉电机有限公司", "RZ-QYC-2D/6N 氢气净化及在线监测装置", 1, "氢气纯化", false, []);
+        addSaleInternal("贵州省", "贵州华立信机电设备有限公司", "RZ-AGC-50D 型防爆型全自动氨气净化设备", 1, "氨气纯化", false, []);
+        addSaleInternal("北京市", "北京科技大学", "RZ-500C 型净化系统、HP-500 配气系统", 2, "气体净化", false, []);
+        addSaleInternal("北京市", "北京精仪天和智能装备有限公司", "RZ-YA-6C 型氩气纯化装置", 1, "氩气纯化", false, []);
+        addSaleInternal("北京市", "北京耕昌科技有限公司", "RZ-YA-4C 氩气净化装置", 1, "氩气纯化", false, []);
+        addSaleInternal("北京市", "北京化工大学", "RZ-YA-4D 全自动氩气净化装置", 1, "氩气纯化", false, []);
+        addSaleInternal("北京市", "北京七星华创电子股份有限公司", "RZ-YA-2D 全自动氩气净化机", 1, "氩气纯化", false, []);
+        addSaleInternal("北京市", "北京北分华谱分析仪器技术有限公司", "RZ-YA-4C 型氩气净化机", 1, "氩气纯化", false, []);
+        addSaleInternal("北京市", "北京耕昌科技有限公司", "RZ-YA-4C 型氩气净化机", 1, "氩气纯化", false, []);
+        addSaleInternal("北京市", "北京博华允德科技有限责任公司", "RZ-YA-4D 型氩气净化机", 1, "氩气纯化", false, []);
+        addSaleInternal("北京市", "北京华仪宏盛技术有限公司", "RZ-YA-4C 型氩气净化机", 1, "氩气纯化", false, []);
+        addSaleInternal("北京市", "钢研纳克检测技术股份有限公司", "RZ-YA-4C 型氩气净化机", 1, "氩气纯化", false, []);
+        addSaleInternal("北京市", "中国黄金集团有限公司", "RZ-YA-4D 型氩气净化机", 2, "氩气纯化", false, []);
+        addSaleInternal("北京市", "北京太航科技有限公司", "RZ-YA-4C 型氩气净化机", 1, "氩气纯化", false, []);
+        addSaleInternal("北京市", "北京复盛科技发展有限公司", "RZ-YA-4C 型氩气净化机", 1, "氩气纯化", false, []);
+        addSaleInternal("北京市", "北京瑞诚力华科技有限公司", "RZ-YA-4C 型氩气净化机", 1, "氩气纯化", false, []);
+        addSaleInternal("北京市", "北京中以锐科光电技术有限公司", "RZ-YA-4C 型氩气净化机", 1, "氩气纯化", false, []);
+        addSaleInternal("北京市", "北京科技大学", "RZ-YA-4C 型氩气净化机", 1, "氩气纯化", false, []);
+        addSaleInternal("北京市", "北京建工总机电设备安装工程有限公司", "RZ-DYC-80D/6N 型全自动超纯氮气纯化装置", 2, "氮气纯化", false, []);
+        addSaleInternal("北京市", "北京航天航空大学士官学校", "RZ-YYC-5D 型氧气净化充装系统", 1, "氧气纯化", false, []);
+        addSaleInternal("北京市", "北京航天航空大学士官学校", "RZ-DYC-20D 型氮气净化充装系统", 1, "氮气纯化", false, []);
+        addSaleInternal("北京市", "北京太航科技有限公司", "RZ-DYC-4C 型氮气净化机", 1, "氮气纯化", false, []);
+        addSaleInternal("北京市", "北京哈科试验仪器厂", "RZ-DYC-6D/5.5N 全自动氮气纯化设备", 1, "氮气纯化", false, []);
+        addSaleInternal("北京市", "北京南飞气体科技发展有限公司", "RZ-DYC-50G 型高压氮气过滤器", 1, "氮气纯化", false, []);
+        addSaleInternal("北京市", "北京科技大学", "RZ-QYC-1/0.8 氢气纯化装置", 1, "氢气纯化", false, []);
+        addSaleInternal("北京市", "北京有色金属研究院", "RZ-QJC-100/6.0 型中压氢气纯化装置", 1, "氢气纯化", false, []);
+        addSaleInternal("北京市", "中科院电子学研究所", "RZ-QYC-2.0 阴极工艺气体纯化与检测系统", 2, "氢气纯化", false, []);
+        addSaleInternal("北京市", "中国科学院电子学研究院", "RZ-QYC-2C 氢气纯化设备", 1, "氢气纯化", false, []);
+        addSaleInternal("北京市", "中国航发北京航空材料研究院", "RZ-QYC-1C 氢气纯化设备", 1, "氢气纯化", false, []);
+        addSaleInternal("北京市", "安泰环境工程技术有限公司", "RZ-QYC-150D/6N 氢气纯化设备", 1, "氢气纯化", false, []);
+        addSaleInternal("北京市", "中国航天科技集团公司第九研究院十六研究所", "RZ-QYC-4D/6N 型全自动氢气纯化设备", 2, "氢气纯化", false, []);
+        addSaleInternal("北京市", "中国科学院空天信息创新研究院", "RZ-QYC-4D 型全自动氢气净化机", 2, "氢气纯化", false, []);
+        addSaleInternal("北京市", "安泰环境工程技术有限公司", "RZ-QYC-3D 型氢气纯化设备", 1, "氢气纯化", false, []);
+        addSaleInternal("北京市", "北京锐泽新能科技有限公司", "RZ-QYC-100D 型防爆型氢气干燥装置", 1, "氢气纯化", false, []);
+        addSaleInternal("北京市", "北京锐力兴盛科贸有限公司", "RZ-HEC-4D/6N 型氦气纯化装置", 1, "氦气纯化", false, []);
+        addSaleInternal("北京市", "北京科技大学", "RZ-HP-500C 配气净化系统", 2, "混合配气", false, []);
+        addSaleInternal("北京市", "北京佳鹏羽丰国际贸易有限公司", "RZ-HP-3D 型全自动 SF6 氩混合配气设备", 1, "混合配气", false, []);
+        addSaleInternal("浙江省", "衢州吉成新材料有限公司", "RZ-YA-20D 型全自动氩气纯化装置", 1, "氩气纯化", false, []);
+        addSaleInternal("浙江省", "宁波高新区法尔特工业气体有限公司", "RZ-YA-20C 型氩气纯化装置", 1, "氩气纯化", false, []);
+        addSaleInternal("浙江省", "绍兴市富源特种气体有限公司", "RZ-YA-10D/6N 全自动超纯氩气纯化装置", 1, "氩气纯化", false, []);
+        addSaleInternal("浙江省", "绍兴市富源特种气体有限公司", "RZ-DYC-5D/6N 全自动超纯氮气纯化装置", 1, "氮气纯化", false, []);
+        addSaleInternal("浙江省", "浙江欧特森气体有限公司", "RZ-YA-80D/6N 全自动超纯氩气纯化装置", 1, "氩气纯化", false, []);
+        addSaleInternal("浙江省", "浙江欧特森气体有限公司", "RZ-DYC-200C/5N 高压氮气纯化装置", 1, "氮气纯化", false, []);
+        addSaleInternal("浙江省", "杭州临安气体有限公司", "RZ-YA-200C/5N 高压氩气纯化装置", 1, "氩气纯化", false, []);
+        addSaleInternal("浙江省", "杭州临安气体有限公司", "RZ-DYC-200C/5N 高压氮气纯化装置", 1, "氮气纯化", false, []);
+        addSaleInternal("浙江省", "宁波方迪新能源有限公司", "RZ-YAG-200C 型氩气纯化设备（高压）", 2, "氩气纯化", false, []);
+        addSaleInternal("浙江省", "宁波方迪新能源有限公司", "RZ-QYC-60D/6N 型全自动超纯氢气纯化设备", 1, "氢气纯化", false, []);
+        addSaleInternal("浙江省", "松阳县科诚气体有限公司", "RZ-YA-20D,6N 型全自动超纯氩气纯化设备", 1, "氩气纯化", false, []);
+        addSaleInternal("浙江省", "松阳县科诚气体有限公司", "RZ-DYG-200C 型氮气纯化设备（高压）", 1, "氮气纯化", false, []);
+        addSaleInternal("浙江省", "浙江睿毅电子材料有限公司", "RZ-YAG-200C 型氩气纯化设备（高压）", 1, "氩气纯化", false, []);
+        addSaleInternal("浙江省", "浙江睿毅电子材料有限公司", "RZ-DYG-200C 型氮气纯化设备（高压）", 1, "氮气纯化", false, []);
+        addSaleInternal("浙江省", "浙江睿毅电子材料有限公司", "RZ-YA-35D/6N 型全自动氩气纯化设备", 1, "氩气纯化", false, []);
+        addSaleInternal("浙江省", "文成县瑞康气体有限公司（温州）", "RZ-YAG-200C 型氩气纯化设备（高压）", 1, "氩气纯化", false, []);
+        addSaleInternal("浙江省", "文成县瑞康气体有限公司（温州）", "RZ-DYG-200C 型氮气纯化设备（高压）", 1, "氮气纯化", false, []);
+        addSaleInternal("浙江省", "浙江裕泰紧固件制造有限公司", "RZ-YA-4C 氩气净化装置", 1, "氩气纯化", false, []);
+        addSaleInternal("浙江省", "乐清市锦光真空电气有限公司", "RZ-YA-4C 氩气净化装置", 1, "氩气纯化", false, []);
+        addSaleInternal("浙江省", "宁波万荣特种钢有限公司", "RZ-YA-4C 氩气净化装置", 2, "氩气纯化", false, []);
+        addSaleInternal("浙江省", "慈溪市宜美佳铝业有限公司", "RZ-YA-4C 型氩气净化机", 1, "氩气纯化", false, []);
+        addSaleInternal("浙江省", "浙江天马轴承集团有限公司", "RZ-YA-4C 型氩气净化机", 1, "氩气纯化", false, []);
+        addSaleInternal("浙江省", "余姚市机床有限公司", "RZ-YA-4D 型氩气净化机", 1, "氩气纯化", false, []);
+        addSaleInternal("浙江省", "杭州睿立机电科技有限公司", "RZ-YA-4D 型氩气净化机", 1, "氩气纯化", false, []);
+        addSaleInternal("浙江省", "中国科学院宁波材料技术与工程研究所", "RZ-YA-4D 型氩气净化机", 1, "氩气纯化", false, []);
+        addSaleInternal("浙江省", "宁波皓润仪器有限公司", "RZ-YA-4C 型氩气净化机（不除氮）", 1, "氩气纯化", false, []);
+        addSaleInternal("浙江省", "浙江友谊新材料有限公司", "RZ-YA-4D 型氩气净化机", 1, "氩气纯化", false, []);
+        addSaleInternal("浙江省", "宁波万荣特种钢有限公司", "RZ-YA-4C 型氩气净化机", 1, "氩气纯化", false, []);
+        addSaleInternal("浙江省", "浙江林家昌隆阀门铸造有限公司", "RZ-YA-4D 型氩气净化机", 1, "氩气纯化", false, []);
+        addSaleInternal("浙江省", "浙江亚能铸造有限公司", "RZ-YA-4D 型氩气净化机", 1, "氩气纯化", false, []);
+        addSaleInternal("浙江省", "伟成金属制品有限公司", "RZ-YA-4D 型氩气净化机", 1, "氩气纯化", false, []);
+        addSaleInternal("浙江省", "浙江同力重型机械制造有限公司", "RZ-YA-4C 型氩气净化机", 1, "氩气纯化", false, []);
+        addSaleInternal("浙江省", "浙江万丰奥威汽轮股份有限公司", "RZ-YA-4C 型氩气净化机", 1, "氩气纯化", false, []);
+        addSaleInternal("浙江省", "科顺生态建设（宁波）有限公司", "RZ-YA-4D/6N 型全自动氩气净化机", 1, "氩气纯化", false, []);
+        addSaleInternal("浙江省", "科顺生态建设（宁波）有限公司", "RZ-QYC-4D/6N 型全自动氢气净化机", 1, "氢气纯化", false, []);
+        addSaleInternal("浙江省", "浙江六方碳素有限公司", "RZ-YA-2D/6N 型全自动氩气净化机", 1, "氩气纯化", false, []);
+        addSaleInternal("浙江省", "浙江六方碳素有限公司", "RZ-QYC-2D/6N 型全自动氢气净化机", 1, "氢气纯化", false, []);
+        addSaleInternal("浙江省", "嘉兴博谱化工科技有限公司", "RZ-YA-4D 型全自动氩气净化机", 1, "氩气纯化", false, []);
+        addSaleInternal("浙江省", "浙江华熔科技有限公司", "RZ-YA-4C 型氩气净化机", 1, "氩气纯化", false, []);
+        addSaleInternal("浙江省", "浙江六方碳素科技有限公司", "RZ-YA-4D 型全自动氩气净化机", 1, "氩气纯化", false, []);
+        addSaleInternal("浙江省", "浙江六方碳素科技有限公司", "RZ-QYC-4D 型全自动氢气净化机", 1, "氢气纯化", false, []);
+        addSaleInternal("浙江省", "龙游鹏辰新材料科技有限公司", "RZ-YA-4C 型氩气净化机", 1, "氩气纯化", false, []);
+        addSaleInternal("浙江省", "杭州谱育科技发展有限公司", "RZ-YA-4C 型氩气净化机", 1, "氩气纯化", false, []);
+        addSaleInternal("浙江省", "宁波万荣特种钢有限公司", "RZ-YA-4D 型全自动氩气净化机", 1, "氩气纯化", false, []);
+        addSaleInternal("浙江省", "浙江华星阀业有限公司", "RZ-YA-4D 型全自动氩气净化机", 1, "氩气纯化", false, []);
+        addSaleInternal("浙江省", "义乌市淼迈进出口有限公司", "RZ-YA-4C 型氩气净化机", 1, "氩气纯化", false, []);
+        addSaleInternal("浙江省", "兰溪市科源输送机械有限公司", "RZ-YA-4C 型氩气净化机", 1, "氩气纯化", false, []);
+        addSaleInternal("浙江省", "星河国际贸易有限公司", "RZ-YA-4D 型氩气净化机", 1, "氩气纯化", false, []);
+        addSaleInternal("浙江省", "浙江华炜新材料有限公司", "RZ-YA-4C 型氩气净化机", 2, "氩气纯化", false, []);
+        addSaleInternal("浙江省", "宁波宁创新航新材料有限公司", "RZ-YA-4C 型氩气净化机", 2, "氩气纯化", false, []);
+        addSaleInternal("浙江省", "浙江天申铜业有限公司", "RZ-YA-4C 型氩气净化机", 1, "氩气纯化", false, []);
+        addSaleInternal("浙江省", "温州金鸣仓储设备有限公司", "RZ-YA-4C 型氩气净化机", 1, "氩气纯化", false, []);
+        addSaleInternal("浙江省", "浙江元力再生资源有限公司", "RZ-YA-4D 型氩气净化机", 1, "氩气纯化", false, []);
+        addSaleInternal("浙江省", "宁波威尔金属有限公司", "RZ-DYC-10 型氮气纯化装置", 1, "氮气纯化", false, []);
+        addSaleInternal("浙江省", "浙江陶特容器科技有限公司", "RZ-DGC-50 型氮气干燥装置", 1, "氮气纯化", false, []);
+        addSaleInternal("浙江省", "浙江杰特维新材料有限公司", "RZ-DYC-1 型氮气纯化装置", 1, "氮气纯化", false, []);
+        addSaleInternal("浙江省", "浙江华茂航天科技股份有限公司", "RZ-DYC-III 1 型", 1, "氮气纯化", false, []);
+        addSaleInternal("浙江省", "文成县瑞康气体有限公司", "RZ-YA-200G 型氩气纯化设备（高压）", 1, "氩气纯化", false, []);
+        addSaleInternal("浙江省", "文成县瑞康气体有限公司", "RZ-DY-200G 型氮气纯化设备（高压）", 1, "氮气纯化", false, []);
+        addSaleInternal("浙江省", "浙江大学金属材料研究所", "RZ-FQYC-20 型氢气纯化装置", 1, "氢气纯化", false, []);
+        addSaleInternal("浙江省", "诸暨更兴环保设备有限公司", "RZ-QYC-10D/5N 型氢气纯化设备", 1, "氢气纯化", false, []);
+        addSaleInternal("浙江省", "宁波拜特测控技术有限公司", "RZ-QYC-60D/5N 防爆型氢气纯化设备", 1, "氢气纯化", false, []);
+        addSaleInternal("浙江省", "浙江亿孚氢能装备有限公司", "RZ-QYC-2D/5N 型氢气纯化器", 1, "氢气纯化", false, []);
+        addSaleInternal("浙江省", "宁波拜特测控技术有限公司", "RZ-QZC-40D 型全自动氢气纯化设备（三塔）", 1, "氢气纯化", false, []);
+        addSaleInternal("浙江省", "杭州力普化工有限公司", "RZ-YYAC-10D 全自动氧气纯化设备", 1, "氧气纯化", false, []);
+        addSaleInternal("浙江省", "浙江睿毅电子材料有限公司", "RZ-HE-36D/6N 型超纯氦气纯化装置", 1, "氦气纯化", false, []);
+        addSaleInternal("浙江省", "浙江金沃精工股份有限公司", "RZ-AGC-10D 型氨气纯化设备", 1, "氨气纯化", false, []);
+        addSaleInternal("浙江省", "绍兴市上虞宏兴机械仪器制造有限公司", "RZ-CO2-1C 型二氧化碳纯化装置", 2, "二氧化碳纯化", false, []);
+        addSaleInternal("浙江省", "浙江新天天光电科技有限公司", "RZ-HN-20 型氢氮混气装置", 1, "混合配气", false, []);
+        addSaleInternal("浙江省", "浙江益中智能电气有限公司", "RZ-HN-20 型氢氮混气装置", 1, "混合配气", false, []);
+        addSaleInternal("浙江省", "浙江瑞博宝珞杰新材料有限公司", "RZ-HN-100D 型氢氮混气装置", 1, "混合配气", false, []);
+        addSaleInternal("浙江省", "临海市大为光电科技有限公司", "RZ-HN-10D 型氢氮混配装置", 1, "混合配气", false, []);
+        addSaleInternal("浙江省", "绍兴市上虞区荣发电子元件厂", "RZ-HN-300 氢氮配气设备", 1, "混合配气", false, []);
+        addSaleInternal("浙江省", "宁波凯旋消防器材有限公司", "RZ-HP-70D 型全自动氦氮混合机", 1, "混合配气", false, []);
+        addSaleInternal("浙江省", "宁波凯旋消防器材有限公司", "RZ-HP-120D 型全自动氦氮混合机", 1, "混合配气", false, []);
+        addSaleInternal("浙江省", "浙江瑞博宝珞杰新材料有限公司", "RZ-HN-150C 防爆型氢氮混合机", 1, "混合配气", false, []);
+        addSaleInternal("浙江省", "浙江正邦电子股份有限公司", "RZ-HN-110D-Z-EXD 型氮氢混合配比器（正压防爆）", 1, "混合配气", false, []);
+        addSaleInternal("宁夏回族自治区", "银川市宁东华龙化工有限公司", "RZ-YA-20C 型氩气纯化装置", 1, "氩气纯化", false, []);
+        addSaleInternal("宁夏回族自治区", "银川市宁东华龙化工有限公司", "RZ-DYC-20C 氮气纯化装置", 1, "氮气纯化", false, []);
+        addSaleInternal("宁夏回族自治区", "宁夏创盛新材料科技有限公司", "RZ-YA-15D/6N 型全自动超纯氩气纯化设备", 1, "氩气纯化", false, []);
+        addSaleInternal("宁夏回族自治区", "宁夏创盛新材料科技有限公司", "RZ-DYC-10D/6N 型全自动超纯氮气纯化设备", 1, "氮气纯化", false, []);
+        addSaleInternal("宁夏回族自治区", "宁夏创盛新材料科技有限公司", "RZ-YA-70D/6N 型全自动超纯氩纯化设备", 2, "氩气纯化", false, []);
+        addSaleInternal("宁夏回族自治区", "宁夏创盛新材料科技有限公司", "RZ-DYC-20D/6N 型全自动超纯氮纯化设备", 2, "氮气纯化", false, []);
+        addSaleInternal("宁夏回族自治区", "宁夏北鼎新材料产业技术有限公司", "RZ-YA-80D/8.0-6N 型全自动氩气纯化设备", 1, "氩气纯化", false, []);
+        addSaleInternal("宁夏回族自治区", "中卫市金源工贸有限公司", "RZ-YA-20D/6N 型全自动超纯氩气纯化设备", 1, "氩气纯化", false, []);
+        addSaleInternal("宁夏回族自治区", "中卫市金源工贸有限公司", "RZ-DYC-200C 型全自动超纯氮气纯化设备", 1, "氮气纯化", false, []);
+        addSaleInternal("宁夏回族自治区", "中卫市金源工贸有限公司", "RZ-CO2-20D/5N 型全自动二氧化碳纯化设备", 1, "二氧化碳纯化", false, []);
+        addSaleInternal("宁夏回族自治区", "宁夏正野机电有限公司", "RZ-YA-10D/1.2 型氩气纯化设备", 1, "氩气纯化", false, []);
+        addSaleInternal("宁夏回族自治区", "宁夏正野机电有限公司", "RZ-YA-10D/4.8 型氩气纯化设备", 1, "氩气纯化", false, []);
+        addSaleInternal("宁夏回族自治区", "宁夏银北气体有限公司", "RZ-YA-200G 型氩气纯化设备（高压）", 1, "氩气纯化", false, []);
+        addSaleInternal("宁夏回族自治区", "宁夏银北气体有限公司", "RZ-DYC-200G 型高压氮气纯化设备（高压）", 1, "氮气纯化", false, []);
+        addSaleInternal("宁夏回族自治区", "宁夏银北气体有限公司", "RZ-YYC-20D/5N 型-EXD 全自动氧气纯化设备", 1, "氧气纯化", false, []);
+        addSaleInternal("宁夏回族自治区", "宁夏银北气体有限公司", "RZ-CO2-60D/5N 型 全自动二氧化碳纯化设备", 1, "二氧化碳纯化", false, []);
+        addSaleInternal("宁夏回族自治区", "石嘴山市宏顺通达化工有限公司", "RZ-YA-200G 型高压氩气过滤器", 1, "氩气纯化", false, []);
+        addSaleInternal("宁夏回族自治区", "石嘴山市宏顺通达化工有限公司", "RZ-DYC-200G 型高压氮气过滤器", 1, "氮气纯化", false, []);
+        addSaleInternal("宁夏回族自治区", "宁夏宝丰能源集团股份有限公司", "RZ-DYC-1D 型气体纯化器", 2, "气体纯化", false, []);
+        addSaleInternal("宁夏回族自治区", "银川市金凤区宁丰制氧厂", "RZ-DYG-200C 型氮气纯化设备（高压）", 1, "氮气纯化", false, []);
+        addSaleInternal("宁夏回族自治区", "宁夏银北气体有限公司", "RZ-YYC-20D/5N 型-EXD全自动氧气纯化设备", 1, "氧气纯化", false, []);
+        addSaleInternal("陕西省", "西安恒盛邦达机电科技有限公司", "RZ-YA-20C 型氩气纯化装置", 1, "氩气纯化", false, []);
+        addSaleInternal("陕西省", "陕西正康建设工程有限公司", "RZ-YA-20D 型氩气纯化装置", 1, "氩气纯化", false, []);
+        addSaleInternal("陕西省", "陕西正康建设工程有限公司", "RZ-DYC-30D 型氮气纯化装置", 1, "氮气纯化", false, []);
+        addSaleInternal("陕西省", "陕西正康建设工程有限公司", "RZ-QYC-30D 型氢气纯化装置", 1, "氢气纯化", false, []);
+        addSaleInternal("陕西省", "陕西航天时代导航设备有限公司", "RZ-YA-20D 型氩气纯化装置", 1, "氩气纯化", false, []);
+        addSaleInternal("陕西省", "陕西航天时代导航设备有限公司", "RZ-DYC-30D 型氮气纯化装置", 1, "氮气纯化", false, []);
+        addSaleInternal("陕西省", "陕西航天时代导航设备有限公司", "RZ-QYC-30D 型氢气纯化装置", 1, "氢气纯化", false, []);
+        addSaleInternal("陕西省", "陕西纳博盛源气体有限公司", "RZ-YA-300G 型氩气纯化设备（高压）", 1, "氩气纯化", false, []);
+        addSaleInternal("陕西省", "陕西纳博盛源气体有限公司", "RZ-DYC-300G 型氮气纯化设备（高压）", 1, "氮气纯化", false, []);
+        addSaleInternal("陕西省", "渭南临渭区永安化工机电有限公司（永安气体）", "RZ-YA-300G 型高压氩气过滤器", 1, "氩气纯化", false, []);
+        addSaleInternal("陕西省", "渭南临渭区永安化工机电有限公司（永安气体）", "RZ-DYC-300G 型高压氮气过滤器", 1, "氮气纯化", false, []);
+        addSaleInternal("陕西省", "西安钢研功能材料股份有限公司", "RZ-YA-6D/T 氩气净化机", 1, "氩气纯化", false, []);
+        addSaleInternal("陕西省", "宝鸡鼎晟真空热技术有限公司", "RZ-YA-6D/T 氩气净化机", 1, "氩气纯化", false, []);
+        addSaleInternal("陕西省", "西安泛宇航空科技有限责任公司", "RZ-YA-4C 氩气净化装置", 1, "氩气纯化", false, []);
+        addSaleInternal("陕西省", "武警黄金第八支队", "RZ-YA-4C 氩气净化装置", 1, "氩气纯化", false, []);
+        addSaleInternal("陕西省", "西安鸿丰化工机电物资有限公司", "RZ-YA-4D 型氩气净化机", 1, "氩气纯化", false, []);
+        addSaleInternal("陕西省", "武警黄金第八支队", "RZ-YA-4C 型氩气净化机", 1, "氩气纯化", false, []);
+        addSaleInternal("陕西省", "西安钢研功能材料股份有限公司", "RZ-YA-4C 型碳载型氩气净化机", 1, "氩气纯化", false, []);
+        addSaleInternal("陕西省", "西安润则数控设备有限公司", "RZ-YA-4D 型全自动氩气净化机", 1, "氩气纯化", false, []);
+        addSaleInternal("陕西省", "陕西同洲特种设备技术服务有限公司", "RZ-YA-4C 型氩气净化机", 1, "氩气纯化", false, []);
+        addSaleInternal("陕西省", "陕西中晟泰自动化科技有限公司", "RZ-YA-4C 型氩气净化机", 1, "氩气纯化", false, []);
+        addSaleInternal("陕西省", "西安钢研功能材料股份有限公司", "RZ-YA-4D/T 氩气净化机", 1, "氩气纯化", false, []);
+        addSaleInternal("陕西省", "陕西唯稳科技发展有限公司", "RZ-YA-4D 型氩气净化机", 1, "氩气纯化", false, []);
+        addSaleInternal("陕西省", "西安皓森精铸股份有限公司", "RZ-YA-4D 型氩气净化机", 1, "氩气纯化", false, []);
+        addSaleInternal("陕西省", "西安铂力特增材技术股份有限公司", "RZ-YA-4D 型氩气净化机", 1, "氩气纯化", false, []);
+        addSaleInternal("陕西省", "宝鸡欣宏源科技工贸有限公司", "RZ-QYC-4D/6N 型全自动氢气纯化设备", 2, "氢气纯化", false, []);
+        addSaleInternal("陕西省", "西安钢研功能材料股份有限公司", "RZ-QYC-80D 防爆型全自动氢气纯化设备", 1, "氢气纯化", false, []);
+        addSaleInternal("陕西省", "西安钢研功能材料股份有限公司", "RZ-DQC-80D 防爆型全自动氮氢纯化设备", 1, "氢气纯化", false, []);
+        addSaleInternal("陕西省", "西安宝华创新机电设备有限公司", "RZ-QYC-6D/5N-EXD 氢气纯化器（Exd I IC T6 防爆型）", 1, "氢气纯化", false, []);
+        addSaleInternal("陕西省", "西安宝华创新机电设备有限公司", "RZ-YYC-8D/5N-EXD 氧气纯化器（Exd I IC T6 防爆型）", 1, "氧气纯化", false, []);
+        addSaleInternal("陕西省", "陕西天宏硅材料有限公司", "YCG-5 型氧气纯化装置", 1, "氧气纯化", false, []);
+        addSaleInternal("陕西省", "宝鸡宝光气体有限公司", "YYC-20 型氧净化装置", 1, "氧气纯化", false, []);
+        addSaleInternal("云南省", "云南安锋气体有限公司", "RZ-YA-35C 型氩气纯化装置", 1, "氩气纯化", false, []);
+        addSaleInternal("云南省", "云南安锋气体有限公司", "RZ-DYC-20C 氮气纯化装置", 1, "氮气纯化", false, []);
+        addSaleInternal("云南省", "通海广文气体有限责任公司", "RZ-YA-20C 型氩气纯化装置", 1, "氩气纯化", false, []);
+        addSaleInternal("云南省", "通海广文气体有限责任公司", "RZ-DYC-20C 型氮气纯化装置", 1, "氮气纯化", false, []);
+        addSaleInternal("云南省", "昆明卡斯尔化工产品有限公司", "RZ-YA-20C/6N 型氩气纯化装置", 1, "氩气纯化", false, []);
+        addSaleInternal("云南省", "昆明卡斯尔化工产品有限公司", "RZ-DYC-20C/6N 型氮气纯化装置", 1, "氮气纯化", false, []);
+        addSaleInternal("云南省", "富宁县富翔气体有限责任公司", "RZ-YAG-200C 型氩气纯化设备（高压）", 1, "氩气纯化", false, []);
+        addSaleInternal("云南省", "云南科仪化玻有限公司", "RZ-YA-4C 型氩气净化机", 1, "氩气纯化", false, []);
+        addSaleInternal("云南省", "砚山县金成商贸有限公司", "RZ-YA-4D 型氩气净化机", 1, "氩气纯化", false, []);
+        addSaleInternal("云南省", "云南高晟进出口有限公司", "RZ-YA-4D 型氩气净化机", 1, "氩气纯化", false, []);
+        addSaleInternal("云南省", "云南曲靖钢铁集团呈钢钢铁有限公司", "RZ-YA-4D 型氩气净化机", 1, "氩气纯化", false, []);
+        addSaleInternal("云南省", "红河砷业有限责任公司", "RZ-QYC-3D/6N 型全自动超纯氢气净化机", 1, "氢气纯化", false, []);
+        addSaleInternal("云南省", "昆明物理研究所", "RZ-QYC-6D/6N 氢气净化装置", 1, "氢气纯化", false, []);
+        addSaleInternal("云南省", "云南锡业物流有限公司", "RZ-QYC-12D/6N 型防爆型超纯氢气纯化设备", 1, "氢气纯化", false, []);
+        addSaleInternal("云南省", "云南安锋气体有限公司", "RZ-YYC-35/5N 型氧气纯化装置", 1, "氧气纯化", false, []);
+        addSaleInternal("云南省", "云南安锋气体有限公司", "RZ-CO2-35 型二氧化碳纯化装置", 1, "二氧化碳纯化", false, []);
+        addSaleInternal("福建省", "福建融航气体有限公司", "RZ-YA-50C 型氩气纯化装置", 1, "氩气纯化", false, []);
+        addSaleInternal("福建省", "福建融航气体有限公司", "RZ-DYC-50C 型氮气纯化装置", 1, "氮气纯化", false, []);
+        addSaleInternal("福建省", "莆田市荔城区黄石制氧厂", "RZ-YA-200C/5N 高压氩气纯化装置", 1, "氩气纯化", false, []);
+        addSaleInternal("福建省", "莆田市荔城区黄石制氧厂", "RZ-DYG-200C 型氮气纯化设备（高压）", 1, "氮气纯化", false, []);
+        addSaleInternal("福建省", "福建中伟半导体材料有限公司", "RZ-YA-2D/5N 型全自动氩气纯化设备", 1, "氩气纯化", false, []);
+        addSaleInternal("福建省", "福建中伟半导体材料有限公司", "RZ-QYC-1D/5N 型全自动氢气纯化设备", 1, "氢气纯化", false, []);
+        addSaleInternal("福建省", "龙岩市致远工贸有限公司", "RZ-YA-4C 氩气净化装置", 2, "氩气纯化", false, []);
+        addSaleInternal("福建省", "福建东亚机械有限公司", "RZ-YA-4C 氩气净化装置", 1, "氩气纯化", false, []);
+        addSaleInternal("福建省", "福建长泰立鑫达特种铝业有限公司", "RZ-YA-4C 氩气净化装置", 1, "氩气纯化", false, []);
+        addSaleInternal("福建省", "福建科源新材料股份有限公司", "RZ-YA-4C 型氩气净化机", 1, "氩气纯化", false, []);
+        addSaleInternal("福建省", "福州聚利泰合国际贸易有限公司", "RZ-YA-4D 型氩气净化机", 1, "氩气纯化", false, []);
+        addSaleInternal("福建省", "福建龙翌合金有限公司", "RZ-YA-4D 型全自动氩气净化机", 1, "氩气纯化", false, []);
+        addSaleInternal("福建省", "福建东亚机械有限公司", "RZ-YA-4D 型全自动氩气净化机", 1, "氩气纯化", false, []);
+        addSaleInternal("福建省", "福建科源新材料股份有限公司", "RZ-YA-4D 型全自动氩气净化机", 1, "氩气纯化", false, []);
+        addSaleInternal("福建省", "泉州捷鸿光电子制造有限公司", "RZ-DYC-4D 型氮气净化机", 1, "氮气纯化", false, []);
+        addSaleInternal("福建省", "莆田市荔城区黄石制氧厂", "RZ-YA-200G 型氩气纯化设备", 1, "氩气纯化", false, []);
+        addSaleInternal("福建省", "罗源顺发工业气体", "RZ-YA-200G 型氩气纯化设备", 1, "氩气纯化", false, []);
+        addSaleInternal("福建省", "莆田市荔城区黄石制氧厂", "RZ-DYC-200G 型高压氮气纯化设备", 1, "氮气纯化", false, []);
+        addSaleInternal("福建省", "厦门春保精密钨钢制品有限公司", "RZ-QCZ-200/1.6 型氢气纯化装置", 1, "氢气纯化", false, []);
+        addSaleInternal("福建省", "福州优能电子科技有限公司", "RZ-QYC-40D/5N 型防爆型氢气纯化设备", 1, "氢气纯化", false, []);
+        addSaleInternal("福建省", "福清市壹宽贸易有限公司", "RZ-GYHE-6N 型氦气纯化装置", 1, "氦气纯化", false, []);
+        addSaleInternal("重庆市", "重庆叁晟能源有限公司（圣马气体）", "RZ-YA-30C 氩气净化装置", 1, "氩气纯化", false, []);
+        addSaleInternal("重庆市", "重庆语韩科技有限公司", "RZ-EGP120 气体常温纯化器", 1, "气体纯化", false, []);
+        addSaleInternal("重庆市", "重庆特瑞元新材料科技有限责任公司", "RZ-YA-4D 型全自动氩气净化机", 1, "氩气纯化", false, []);
+        addSaleInternal("重庆市", "重庆欣新志泉机械制造有限公司", "RZ-YA-4D 型氩气净化机", 1, "氩气纯化", false, []);
+        addSaleInternal("重庆市", "重庆密奥仪器有限公司", "RZ-DYC-4D 氮气净化机", 1, "氮气纯化", false, []);
+        addSaleInternal("重庆市", "重庆密奥仪器有限公司", "RZ-DYC-1D/6N 氮气净化机", 1, "氮气纯化", false, []);
+        addSaleInternal("重庆市", "重庆大学", "RZ-QYC-60D/6N 氢气纯化设备", 2, "氢气纯化", false, []);
+        addSaleInternal("重庆市", "重庆大学", "RZ-GVC-60D/6N 型氢气纯化设备", 1, "氢气纯化", false, []);
+        addSaleInternal("重庆市", "重庆大学", "RZ-HPCN-60D 天然气掺氢系统", 1, "混合配气", false, []);
+        addSaleInternal("重庆市", "重庆翔源制冷设备股份有限公司", "RZ-AGC-100D 防爆型全自动氨气纯化设备", 1, "氨气纯化", false, []);
+        addSaleInternal("湖北省", "武汉市同和气体制造有限公司", "RZ-GYA-200C 型高压氩气纯化装置", 1, "氩气纯化", false, []);
+        addSaleInternal("湖北省", "宜昌市得心实用气体有限公司", "RZ-YA-20D/6N 型全自动超纯氩气纯化设备", 1, "氩气纯化", false, []);
+        addSaleInternal("湖北省", "武汉市同和气体制造有限公司", "RZ-YA-200G 型氩气纯化设备（高压）", 1, "氩气纯化", false, []);
+        addSaleInternal("湖北省", "湖北弘安气体有限公司", "RZ-YA-200G 型高压氩气过滤器", 1, "氩气纯化", false, []);
+        addSaleInternal("湖北省", "湖北弘安气体有限公司", "RZ-DYC-200G 型高压氮气过滤器", 1, "氮气纯化", false, []);
+        addSaleInternal("湖北省", "荆州市华强化工有限公司", "RZ-YA-200G 型高压氩气过滤器", 1, "氩气纯化", false, []);
+        addSaleInternal("湖北省", "荆州市华强化工有限公司", "RZ-DYC-200G 型高压氮气过滤器", 1, "氮气纯化", false, []);
+        addSaleInternal("湖北省", "武汉市阳逻国跃化工气体有限公司", "RZ-YA-200G 型高压氩气过滤器", 1, "氩气纯化", false, []);
+        addSaleInternal("湖北省", "武汉市阳逻国跃化工气体有限公司", "RZ-DYC-200G 型高压氮气过滤器", 1, "氮气纯化", false, []);
+        addSaleInternal("湖北省", "湖北金洋冶金股份有限公司", "RZ-YA-4D 全自动氩气净化机", 1, "氩气纯化", false, []);
+        addSaleInternal("湖北省", "十堰宝嘉科工贸有限公司", "RZ-YA-4C 型氩气净化机", 1, "氩气纯化", false, []);
+        addSaleInternal("湖北省", "武汉普创数码科技有限公司", "RZ-YA-4C 型氩气净化机", 1, "氩气纯化", false, []);
+        addSaleInternal("湖北省", "张雪红（通山）出口越南", "RZ-YA-4D 型氩气净化机", 1, "氩气纯化", false, []);
+        addSaleInternal("湖北省", "武汉六丰机械工业有限公司", "RZ-YA-4C 型氩气净化机", 1, "氩气纯化", false, []);
+        addSaleInternal("湖北省", "湖北三祥铸业股份有限公司", "RZ-YA-4D 型氩气净化机", 1, "氩气纯化", false, []);
+        addSaleInternal("湖北省", "中国地质大学（武汉）", "RZ-YA-4D 型全自动氩气净化机", 1, "氩气纯化", false, []);
+        addSaleInternal("湖北省", "丹江口市环宇机械股份有限公司", "RZ-YA-4D 型全自动氩气净化机", 1, "氩气纯化", false, []);
+        addSaleInternal("湖北省", "湖北丰和精密机械有限公司", "RZ-YA-4D 型氩气净化机", 1, "氩气纯化", false, []);
+        addSaleInternal("湖北省", "武汉格瑞斯新能源有限公司", "RZ-YA-4C 型氩气净化机", 2, "氩气纯化", false, []);
+        addSaleInternal("湖北省", "武汉工程大学材料科学与工程院", "RZ-QYC-1 型氢气纯化装置", 1, "氢气纯化", false, []);
+        addSaleInternal("湖北省", "湖北菲利华石英玻璃股份有限公司", "RZ-QGC-80D-EXD 型氢气纯化器", 1, "氢气纯化", false, []);
+        addSaleInternal("湖北省", "中国人民解放军第5713工厂", "RZ-5D 氨气纯化器", 2, "氨气纯化", false, []);
+        addSaleInternal("湖北省", "武汉协和齿环2厂有限公司", "RZ-5D 氨气纯化器", 1, "氨气纯化", false, []);
+        addSaleInternal("湖北省", "武汉协和齿环4厂有限公司", "RZ-2D 氨气纯化器", 1, "氨气纯化", false, []);
+        addSaleInternal("湖北省", "中国人民解放军第5713工厂", "RZ-15D 氨气纯化器", 1, "氨气纯化", false, []);
+        addSaleInternal("湖北省", "十堰同创传动技术有限公司", "RZ-3 型气体稳压稳流设备", 2, "混合配气", false, []);
+        addSaleInternal("湖北省", "武汉市碳翁科技有限公司", "RZ-HP-A 气体混合配气装置", 1, "混合配气", false, []);
+        addSaleInternal("河南省", "安阳安科实用气体有限公司", "RZ-YA-30D/6N 型全自动氩气纯化设备", 1, "氩气纯化", false, []);
+        addSaleInternal("河南省", "安阳安科实用气体有限公司", "RZ-DYC-30D/6N 型全自动氮气纯化设备", 1, "氮气纯化", false, []);
+        addSaleInternal("河南省", "洛阳市万科工业气体有限公司", "RZ-YAG-200C 型氩气纯化设备（高压）", 1, "氩气纯化", false, []);
+        addSaleInternal("河南省", "长垣市大车气体能源站", "RZ-DYG-200C 高压氮气纯化设备", 1, "氮气纯化", false, []);
+        addSaleInternal("河南省", "荥阳市兴华气体有限公司", "RZ-YAG-200C 型氩气纯化设备（高压）", 1, "氩气纯化", false, []);
+        addSaleInternal("河南省", "荥阳市兴华气体有限公司", "RZ-DYG-200C 型氮气纯化设备（高压）", 1, "氮气纯化", false, []);
+        addSaleInternal("河南省", "河南省天盛燃气有限公司", "RZ-YA-200G 型氩气纯化设备（高压）", 1, "氩气纯化", false, []);
+        addSaleInternal("河南省", "河南豫光金铅股份有限公司", "RZ-YA-10C/6N 型氩气纯化器", 1, "氩气纯化", false, []);
+        addSaleInternal("河南省", "河南豫光金铅股份有限公司", "RZ-QYC-4C/6N 型氢气纯化器", 1, "氢气纯化", false, []);
+        addSaleInternal("河南省", "汤阴县锦利胜气体有限公司", "RZ-YA-300G 型氩气纯化设备（高压）", 1, "氩气纯化", false, []);
+        addSaleInternal("河南省", "河南宜泰商贸有限公司", "RZ-YA-200G 型高压氩气过滤器", 1, "氩气纯化", false, []);
+        addSaleInternal("河南省", "维恩克（鹤壁）镁基材料有限公司", "RZ-YA-4C 氩气净化装置", 1, "氩气纯化", false, []);
+        addSaleInternal("河南省", "南阳迅天宇硅品有限公司", "RZ-YA-4C 氩气净化装置", 1, "氩气纯化", false, []);
+        addSaleInternal("河南省", "三门峡天元铝业股份有限公司", "RZ-YA-4C 氩气净化装置", 1, "氩气纯化", false, []);
+        addSaleInternal("河南省", "河南鲁西工业集团", "RZ-YA-4D 全自动氩气净化装置", 1, "氩气纯化", false, []);
+        addSaleInternal("河南省", "河南国荣精密重型机械有限公司.中国航天", "RZ-YA-4C 型氩气净化机", 1, "氩气纯化", false, []);
+        addSaleInternal("河南省", "豫西工业集团", "RZ-YA-4C 型氩气净化机", 1, "氩气纯化", false, []);
+        addSaleInternal("河南省", "河南国荣精密重型机械有限公司", "RZ-YA-4D 型氩气净化机", 1, "氩气纯化", false, []);
+        addSaleInternal("河南省", "郑州轻研合金科技有限公司", "RZ-YA-4C 型氩气净化机", 1, "氩气纯化", false, []);
+        addSaleInternal("河南省", "洛阳市万科工业气体有限公司", "RZ-YA-4C 型氩气净化机", 1, "氩气纯化", false, []);
+        addSaleInternal("河南省", "河南发恩德矿业有限公司", "RZ-YA-4D 型氩气净化机", 1, "氩气纯化", false, []);
+        addSaleInternal("河南省", "郑州科利科仪实验设备有限公司", "RZ-YA-4D 型氩气净化机", 1, "氩气纯化", false, []);
+        addSaleInternal("河南省", "洛阳市沃尔福化玻仪器有限公司", "RZ-YA-4D 型氩气净化机", 1, "氩气纯化", false, []);
+        addSaleInternal("河南省", "濮阳市鑫源化工器材有限公司", "RZ-YA-20C 型氩气纯化装置", 1, "氩气纯化", false, []);
+        addSaleInternal("河南省", "濮阳市鑫源化工器材有限公司", "RZ-DYC-20C 氮气纯化装置", 1, "氮气纯化", false, []);
+        addSaleInternal("河南省", "濮阳市鑫源化工器材有限公司", "RZ-YYC-20C 型氧气纯化装置", 1, "氧气纯化", false, []);
+        addSaleInternal("河南省", "安阳安科实用气体有限公司", "RZ-DYC-30D/6N 型全自动氩气纯化设备", 1, "氮气纯化", false, []);
+        addSaleInternal("河南省", "清丰县宏升气体销售有限公司", "RZ-DYG-200C 型氮气纯化设备（高压）", 1, "氮气纯化", false, []);
+        addSaleInternal("河南省", "洛阳美进超硬材料有限公司", "RZ-DYC-4D 全自动氮气净化机", 1, "氮气纯化", false, []);
+        addSaleInternal("河南省", "平顶山市贸易有限公司", "RZ-HN-15 混合配气装置", 1, "混合配气", false, []);
+        addSaleInternal("河南省", "河南优科电子有限公司", "RZ-HN-10 型氢氮混气装置", 1, "混合配气", false, []);
+        addSaleInternal("河南省", "平顶山业强科技有限公司", "RZ-HN-300 型氢氮混气装置", 1, "混合配气", false, []);
+        addSaleInternal("河南省", "河南四方达超硬材料股份有限公司", "RZ-HN-500L 型氢氮混气装置", 1, "混合配气", false, []);
+        addSaleInternal("河南省", "平顶山业强科技有限公司", "RZ-HN-300Ⅱ型", 2, "混合配气", false, []);
+        addSaleInternal("河南省", "平顶山叶强科技有限公司", "RZ-HN-300D 型氢氮混配装置", 2, "混合配气", false, []);
+        addSaleInternal("河南省", "平顶山业强科技有限公司", "RZ-HP-30D 型氢氮混合配比装置", 1, "混合配气", false, []);
+        addSaleInternal("河南省", "河南万达工业智能装备有限公司", "RZ-HP-4D/EXD 全自动氢氩混合配气设备（正压防爆型）", 1, "混合配气", false, []);
+        addSaleInternal("广西壮族自治区", "广西铟泰科技有限公司", "RZ-YA-10D/5N 型全自动氩气纯化设备", 1, "氩气纯化", false, []);
+        addSaleInternal("广西壮族自治区", "广西铟泰科技有限公司", "RZ-QYC-20D/5N 型全自动氢气纯化设备", 1, "氢气纯化", false, []);
+        addSaleInternal("广西壮族自治区", "凭祥市新希望对外贸易有限责任公司", "RZ-YA-50D/6N 全自动超纯氩气纯化设备（出口）", 1, "氩气纯化", false, []);
+        addSaleInternal("广西壮族自治区", "广西南南铝加工有限公司", "RZ-YA-4C 氩气净化装置", 1, "氩气纯化", false, []);
+        addSaleInternal("广西壮族自治区", "广西南宁旗科仪器有限公司", "RZ-YA-4C 氩气净化装置", 1, "氩气纯化", false, []);
+        addSaleInternal("广西壮族自治区", "南宁卓扬仪器设备有限公司", "RZ-YA-4C 氩气净化装置", 1, "氩气纯化", false, []);
+        addSaleInternal("广西壮族自治区", "广西千喜科技有限公司", "RZ-YA-4C 型氩气净化机", 1, "氩气纯化", false, []);
+        addSaleInternal("广西壮族自治区", "桂林奇达机电科技有限公司", "RZ-YA-4D 型氩气净化机", 1, "氩气纯化", false, []);
+        addSaleInternal("广西壮族自治区", "桂林兴安恒盛医用氧有限公司", "RZ-DYC-20 型氮气纯化装置", 1, "氮气纯化", false, []);
+        addSaleInternal("广西壮族自治区", "桂林兴安恒盛医用氧有限公司", "RZ-CO2-20 型二氧化碳纯化装置", 1, "二氧化碳纯化", false, []);
+        addSaleInternal("广西壮族自治区", "南宁市卓越气体有限公司", "RZ-CO2-35D 型食品级二氧化碳纯化设备", 1, "二氧化碳纯化", false, []);
+        addSaleInternal("广西壮族自治区", "南宁市卓越气体有限公司", "RZ-N2O-10C 型食品级氧化亚氮纯化设备", 1, "特殊气体纯化", false, []);
+        addSaleInternal("广西壮族自治区", "南宁市卓越气体有限公司", "RZ-DYG-200C 型食品级氮气纯化设备", 1, "氮气纯化", false, []);
+        addSaleInternal("广西壮族自治区", "桂林奇达机电科技有限公司", "RZ-YYC-4D 氧气净化机", 1, "氧气纯化", false, []);
+        addSaleInternal("甘肃省", "酒泉顺鑫气体股份有限公司", "RZ-YAG-200C 型氩气纯化设备（高压）", 1, "氩气纯化", false, []);
+        addSaleInternal("甘肃省", "酒泉顺鑫气体股份有限公司", "RZ-DYG-200C 型氮气纯化设备（高压）", 1, "氮气纯化", false, []);
+        addSaleInternal("甘肃省", "嘉峪关爱国兴业气体有限责任公司", "RZ-YAG-200C 型氩气纯化设备（高压）", 1, "氩气纯化", false, []);
+        addSaleInternal("甘肃省", "嘉峪关爱国兴业气体有限责任公司", "RZ-DYG-200C 型氮气纯化设备（高压）", 1, "氮气纯化", false, []);
+        addSaleInternal("甘肃省", "酒泉市荣祥制氧有限责任公司", "RZ-YA-200G 型氩气纯化设备（高压）", 1, "氩气纯化", false, []);
+        addSaleInternal("甘肃省", "酒泉市荣祥制氧有限责任公司", "RZ-DY-200G 型氮气纯化设备（高压）", 1, "氮气纯化", false, []);
+        addSaleInternal("甘肃省", "甘肃盛华机械制造有限公司", "RZ-YA-2C 型氩气净化机", 1, "氩气纯化", false, []);
+        addSaleInternal("甘肃省", "定西高强度紧固件股份有限公司", "RZ-YA-4C 型氩气净化机", 1, "氩气纯化", false, []);
+        addSaleInternal("甘肃省", "瓜州县盛权工贸有限公司", "RZ-DYC-200G 型高压氮气过滤器", 1, "氮气纯化", false, []);
+        addSaleInternal("甘肃省", "中核四0四有限公司", "QTJHQ-9N 型气体净化器", 1, "气体纯化", false, []);
+        addSaleInternal("甘肃省", "中核404有限公司物资供应中心", "RZ-GYHE-10N 型氦气纯化装置", 1, "氦气纯化", false, []);
+        addSaleInternal("新疆维吾尔自治区", "阜康市东昇工贸有限责任公司", "RZ-YAG-200C 型氩气纯化设备（高压）", 1, "氩气纯化", false, []);
+        addSaleInternal("新疆维吾尔自治区", "新疆天瑞达工业气体有限公司", "RZ-YAG-200C 型氩气纯化设备（高压）", 1, "氩气纯化", false, []);
+        addSaleInternal("新疆维吾尔自治区", "新疆天瑞达工业气体有限公司", "RZ-DYG-200C 型氮气纯化设备（高压）", 1, "氮气纯化", false, []);
+        addSaleInternal("新疆维吾尔自治区", "新疆晟达恒源工业气体有限公司", "RZ-YAG-200C 型氩气纯化设备（高压）", 1, "氩气纯化", false, []);
+        addSaleInternal("新疆维吾尔自治区", "新疆晟达恒源工业气体有限公司", "RZ-DYG-200C 型氮气纯化设备（高压）", 1, "氮气纯化", false, []);
+        addSaleInternal("新疆维吾尔自治区", "新疆天合优气体有限公司", "RZ-YA-200G 型高压氩气过滤器", 1, "氩气纯化", false, []);
+        addSaleInternal("新疆维吾尔自治区", "新疆天合优气体有限公司", "RZ-DYC-200G 型高压氮气过滤器", 1, "氮气纯化", false, []);
+        addSaleInternal("新疆维吾尔自治区", "新疆众合股份有限公司", "RZ-YA-20D 型氩气净化机", 1, "氩气纯化", false, []);
+        addSaleInternal("新疆维吾尔自治区", "新疆方科机械制造有限公司", "RZ-YA-4C 型氩气净化机", 1, "氩气纯化", false, []);
+        addSaleInternal("新疆维吾尔自治区", "乌鲁木齐中仪科创仪器设备有限公司", "RZ-YA-4D 型氩气净化机", 1, "氩气纯化", false, []);
+        addSaleInternal("上海市", "上海固华机械设备有限公司", "RZ-GZ-1C 气体干燥机", 1, "气体干燥", false, []);
+        addSaleInternal("上海市", "上海意迪尔洁净系统工程有限公司", "RZ-YA-4C 氩气净化装置", 1, "氩气纯化", false, []);
+        addSaleInternal("上海市", "上海向铭金属设备有限公司", "RZ-YA-4C 氩气净化装置", 1, "氩气纯化", false, []);
+        addSaleInternal("上海市", "上海南汇立达铸造有限公司", "RZ-YA-4C 氩气净化装置", 1, "氩气纯化", false, []);
+        addSaleInternal("上海市", "上海瑞纽机械股份有限公司", "RZ-YA-4C 氩气净化装置", 1, "氩气纯化", false, []);
+        addSaleInternal("上海市", "上海交通大学", "RZ-YA-4C 型氩气净化机", 1, "氩气纯化", false, []);
+        addSaleInternal("上海市", "上海弘枫实业有限公司", "RZ-YA-4C 型氩气净化机", 1, "氩气纯化", false, []);
+        addSaleInternal("上海市", "上海轩箬贸易有限公司", "RZ-YA-4C 型氩气净化机", 1, "氩气纯化", false, []);
+        addSaleInternal("上海市", "上海斯普优分析仪器有限公司", "RZ-YA-4C 型氩气净化机", 1, "氩气纯化", false, []);
+        addSaleInternal("上海市", "上海中州特种合金材料股份有限公司", "RZ-YA-4C 型氩气净化机", 1, "氩气纯化", false, []);
+        addSaleInternal("上海市", "上海奥星制药技术装备有限公司", "RZ-YA-4D 型全自动氩气净化机", 1, "氩气纯化", false, []);
+        addSaleInternal("上海市", "上海交通大学", "RZ-YA-4D 型氩气净化机", 1, "氩气纯化", false, []);
+        addSaleInternal("上海市", "上海名测科学仪器有限公司", "RZ-YA-4C 型氩气净化机", 1, "氩气纯化", false, []);
+        addSaleInternal("上海市", "上海然勤光电科技有限公司", "RZ-YA-4D 型氩气净化机", 1, "氩气纯化", false, []);
+        addSaleInternal("上海市", "上海钜晶精密仪器制造有限公司", "RZ-DYC-1D/5N 除氧机（氮气净化机）", 2, "氮气纯化", false, []);
+        addSaleInternal("上海市", "中国科学院上海应用物理研究所", "RZ-QYC-110D 型全自动氢气纯化设备", 1, "氢气纯化", false, []);
+        addSaleInternal("上海市", "西域智慧供应链（上海）股份公司", "RZ-QYC-10D/5N 防爆型氢气干燥纯化设备", 1, "氢气纯化", false, []);
+        addSaleInternal("上海市", "欧瑞康美科表面技术（上海）有限公司", "IONIT 产线氨气净化设备", 1, "氨气纯化", false, []);
+        addSaleInternal("上海市", "法垄热工技术（上海）有限公司", "RZ-5C 氨气干燥设备（半自动）", 1, "氨气纯化", false, []);
+        addSaleInternal("上海市", "欧瑞康美科表面技术（上海）有限公司", "RZ-120D 氨气净化设备", 1, "氨气纯化", false, []);
+        addSaleInternal("上海市", "欧瑞康美科表面技术（上海）有限公司", "RZ-80C 氨气净化设备", 1, "氨气纯化", false, []);
+        addSaleInternal("上海市", "上海米禾豆能源设备有限公司", "RZ-AGC-30D/EXD 防爆型全自动氨气纯化设备", 1, "氨气纯化", false, []);
+        addSaleInternal("上海市", "布劳恩惰性气体系统（上海）有限公司", "RZ-HP-9C 型氦氩混合设备", 1, "混合配气", false, []);
+        addSaleInternal("江西省", "新余市凯尉气体有限公司", "RZ-YA-50G 型高压氩气过滤器", 1, "氩气纯化", false, []);
+        addSaleInternal("江西省", "江西宏华铷铯新材料科技有限公司", "RZ-YA-15D/6N 全自动超纯氩气纯化设备", 1, "氩气纯化", false, []);
+        addSaleInternal("江西省", "六和电子（江西）有限公司", "RZ-YA-4D 型氩气净化机", 1, "氩气纯化", false, []);
+        addSaleInternal("江西省", "江西宸龙新材料有限公司", "RZ-YA-4D 型全自动氩气净化机", 1, "氩气纯化", false, []);
+        addSaleInternal("江西省", "江西金匠智能装备有限公司", "RZ-YA-4D 型氩气净化机", 1, "氩气纯化", false, []);
+        addSaleInternal("江西省", "江西众加利仪器有限公司", "RZ-YA-4D 型氩气净化机", 1, "氩气纯化", false, []);
+        addSaleInternal("江西省", "江西联峰熔模铸造有限公司", "RZ-YA-4D 型氩气净化机", 1, "氩气纯化", false, []);
+        addSaleInternal("江西省", "六和电子（江西）有限公司", "RZ-YA-4C 型氩气净化机", 1, "氩气纯化", false, []);
+        addSaleInternal("江西省", "江西萨瑞微电子技术有限公司", "RZ-DGC-20C 型氮气干燥装置", 1, "氮气纯化", false, []);
+        addSaleInternal("江西省", "江西萨瑞微电子技术有限公司", "RZ-YYC-10C 型氧气干燥装置", 1, "氧气纯化", false, []);
+        addSaleInternal("江西省", "六和电子（江西）有限公司", "RZ-DYC-4D 型全自动氮气纯化设备", 1, "氮气纯化", false, []);
+        addSaleInternal("江西省", "中材科技（九江）有限公司", "RZ-DYC-100D/6N 型氮气纯化器", 1, "氮气纯化", false, []);
+        addSaleInternal("江西省", "江西萨瑞微电子技术有限公司", "RZ-HN-10 型氢氮混气装置", 1, "混合配气", false, []);
+        addSaleInternal("江西省", "南昌求实科教设备有限公司", "RZ-HP-6 型多元配气设备", 1, "混合配气", false, []);
+        addSaleInternal("江西省", "江西省吉晶微电子有限公司", "RZ-HN-30D 型氢氮混配装置", 1, "混合配气", false, []);
+        addSaleInternal("江西省", "九江正启微电子有限公司", "RZ-HN-20D 型氢氮混配装置", 1, "混合配气", false, []);
+        addSaleInternal("江西省", "江西亮华科技有限公司", "RZ-HP-20 低氧空气配比装置", 1, "混合配气", false, []);
+        addSaleInternal("江西省", "江西萨瑞微电子技术有限公司", "RZ-HN-45Ⅱ型氢氮混合配气设备", 1, "混合配气", false, []);
+        addSaleInternal("吉林省", "长春一方伟业经贸有限公司", "RZ-YA-4C 氩气净化装置", 1, "氩气纯化", false, []);
+        addSaleInternal("吉林省", "长春中誉有色铸造有限公司", "RZ-YA-4D 型氩气净化机", 1, "氩气纯化", false, []);
+        addSaleInternal("吉林省", "吉林省威尔仪器设备有限公司", "RZ-YA-4D 型氩气净化机", 1, "氩气纯化", false, []);
+        addSaleInternal("吉林省", "四平摁梯钨钼材料有限公司", "RZ-QGC-30/0.04 型超纯氢气纯化装置", 1, "氢气纯化", false, []);
+        addSaleInternal("多哥", "非洲多哥许航", "RZ-YA-4D 型氩气净化机", 1, "氩气纯化", false, []);
+        addSaleInternal("天津市", "弗恩森（天津）科技有限公司", "RZ-YA-4C 型单塔氩气净化机", 1, "氩气纯化", false, []);
+        addSaleInternal("天津市", "建科机械（天津）股份有限公司", "RZ-YA-4C 型氩气净化机", 1, "氩气纯化", false, []);
+        addSaleInternal("天津市", "弗恩森（天津）科技有限公司", "RZ-YA-4C 型氩气净化机", 2, "氩气纯化", false, []);
+        addSaleInternal("天津市", "天津信诺机电设备有限公司", "RZ-DYC-4D/6N 型全自动超纯氮气纯化装置", 1, "氮气纯化", false, []);
+        addSaleInternal("天津市", "天津伊利乳品有限责任公司", "RZ-HP-6 型气体比例混合器", 1, "混合配气", false, []);
+        addSaleInternal("天津市", "天津师范大学物理与材料学院", "RZ-HP-A 气体混合配气装置", 1, "混合配气", false, []);
+        addSaleInternal("天津市", "立行纳米科技(天津)有限公司", "RZ-HP-A 气体混合配气装置", 1, "混合配气", false, []);
+        addSaleInternal("塔吉克斯坦", "中塔钢铁", "RZ-YA-4D 型氩气净化机", 1, "氩气纯化", false, []);
+
+        saveData();
+        console.log("已初始化示例数据，共", Object.keys(salesDB).length, "个省份");
+    }
+
+    function addSaleInternal(province, company, productName, qty, productType, save, images = []) {
+        if (!salesDB[province]) {
+            salesDB[province] = { products: [], companies: new Set(), details: [] };
+        }
+        const existingProduct = salesDB[province].products.find(p => p.name === productName);
+        if (existingProduct) {
+            existingProduct.qty += qty;
+        } else {
+            salesDB[province].products.push({ name: productName, qty: qty });
+        }
+        salesDB[province].companies.add(company);
+        salesDB[province].details.push({
+            id: Date.now() + Math.random(),
+            company: company,
+            product: productName,
+            qty: qty,
+            type: productType,
+            date: new Date().toLocaleDateString(),
+            images: images || []
+        });
+        if (save) saveData();
+    }
+
+    async function addSale(province, productName, qty, companyName, productType) {
+        const company = companyName || "其他客户";
+        if (!salesDB[province]) {
+            salesDB[province] = { products: [], companies: new Set(), details: [] };
+        }
+        const existingDetail = salesDB[province].details.find(d => d.company === company && d.product === productName);
+        if (existingDetail) {
+            if (confirm(`检测到重复记录！\n\n省份: ${province}\n客户: ${company}\n产品: ${productName}\n\n是否覆盖为新的数量 ${qty} 台？`)) {
+                existingDetail.qty = qty;
+                existingDetail.date = new Date().toLocaleDateString();
+                rebuildProvinceData(province);
+                await saveData();
+                refreshAll();
+                alert(`✅ 已更新，${productName} 当前数量: ${qty} 台`);
+            }
+            return;
+        }
+        salesDB[province].products.push({ name: productName, qty: qty });
+        salesDB[province].companies.add(company);
+        salesDB[province].details.push({
+            id: Date.now() + Math.random(),
+            company: company,
+            product: productName,
+            qty: qty,
+            type: productType,
+            date: new Date().toLocaleDateString(),
+            images: []
+        });
+        await saveData();
+        refreshAll();
+    }
+
+    // ================= 图片处理 =================
+    window.uploadImageForRecord = function(province, detailId) {
+        const input = document.createElement('input');
+        input.type = 'file';
+        input.accept = 'image/*';
+        input.onchange = (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = (ev) => {
+                const base64 = ev.target.result;
+                const detail = salesDB[province]?.details.find(d => d.id == detailId);
+                if (detail) {
+                    if (!detail.images) detail.images = [];
+                    detail.images.push(base64);
+                    saveData();
+                    refreshAll();
+                    loadEditList();
+                    loadDataList();
+                    alert("图片已添加");
+                }
+            };
+            reader.readAsDataURL(file);
+        };
+        input.click();
+    };
+
+    window.deleteImage = function(province, detailId, imgIndex) {
+        const detail = salesDB[province]?.details.find(d => d.id == detailId);
+        if (detail && detail.images && detail.images[imgIndex]) {
+            detail.images.splice(imgIndex, 1);
+            saveData();
+            refreshAll();
+            loadEditList();
+            loadDataList();
+            alert("图片已删除");
+        }
+    };
+
+    window.viewImage = function(src) {
+        const div = document.createElement('div');
+        div.className = 'modal-image-view';
+        div.onclick = () => div.remove();
+        const img = document.createElement('img');
+        img.src = src;
+        div.appendChild(img);
+        document.body.appendChild(div);
+    };
+
+    function renderImagesCell(images, province, detailId) {
+        if (!images || images.length === 0) {
+            return `<div><span class="no-img-placeholder">暂无图片</span><br><button class="upload-btn-sm" onclick="event.stopPropagation();uploadImageForRecord('${province}',${detailId})">📷 上传图片</button></div>`;
+        }
+        let html = `<div class="image-gallery">`;
+        images.forEach((img, idx) => {
+            html += `<img src="${img}" class="gallery-img" onclick="event.stopPropagation();viewImage('${img}')" title="点击放大">
+                     <button class="action-btn delete-btn" style="font-size:0.7rem;" onclick="event.stopPropagation();deleteImage('${province}',${detailId},${idx})">🗑️</button>`;
+        });
+        html += `<button class="upload-btn-sm" onclick="event.stopPropagation();uploadImageForRecord('${province}',${detailId})">➕ 添加</button></div>`;
+        return html;
+    }
+
+    // ================= 编辑/删除列表 =================
+    function loadEditList() {
+        const searchProv = document.getElementById('editSearchProvince').value.toLowerCase();
+        const searchProd = document.getElementById('editSearchProduct').value.toLowerCase();
+        const searchType = document.getElementById('editSearchType').value;
+        
+        let allRecords = [];
+        for (let prov in salesDB) {
+            for (let detail of salesDB[prov].details) {
+                allRecords.push({ prov: prov, detail: detail });
+            }
+        }
+        
+        let filtered = allRecords;
+        if (searchProv) filtered = filtered.filter(r => r.prov.toLowerCase().includes(searchProv));
+        if (searchProd) filtered = filtered.filter(r => r.detail.product.toLowerCase().includes(searchProd) || r.detail.company.toLowerCase().includes(searchProd));
+        if (searchType) filtered = filtered.filter(r => r.detail.type === searchType);
+        
+        const editListDiv = document.getElementById('editList');
+        if (filtered.length === 0) {
+            editListDiv.innerHTML = '<div class="no-data"><i class="fas fa-search"></i> 没有找到匹配的记录</div>';
+            return;
+        }
+        
+        let html = `<div class="search-result-count"><i class="fas fa-list"></i> 找到 ${filtered.length} 条记录</div>
+                    <table class="data-table"><thead><tr><th>省份</th><th>客户</th><th>产品</th><th>数量</th><th>类型</th><th>现场图片</th><th>操作</th></tr></thead><tbody>`;
+        for (let r of filtered) {
+            html += `<tr>
+                        <td style="white-space:nowrap;">${escapeHtml(r.prov)}</td>
+                        <td style="max-width:150px; word-break:break-word;">${escapeHtml(r.detail.company)}</td>
+                        <td style="max-width:200px; word-break:break-word;">${escapeHtml(r.detail.product)}</td>
+                        <td style="text-align:center;"><input type="number" id="qty_${r.detail.id}" value="${r.detail.qty}" style="width:70px; padding:6px; border-radius:20px; border:1px solid #cde0ea; text-align:center;"></td>
+                        <td style="text-align:center;">${escapeHtml(r.detail.type)}</td>
+                        <td>${renderImagesCell(r.detail.images, r.prov, r.detail.id)}</td>
+                        <td style="white-space:nowrap;">
+                            <button class="action-btn edit-btn" onclick="updateItem('${r.prov}', ${r.detail.id})" title="保存修改"><i class="fas fa-save"></i></button>
+                            <button class="action-btn delete-btn" onclick="deleteItem('${r.prov}', ${r.detail.id})" title="删除记录"><i class="fas fa-trash"></i></button>
+                        </td>
+                    </tr>`;
+        }
+        html += `</tbody>`;
+        editListDiv.innerHTML = html;
+    }
+
+    function escapeHtml(s) {
+        if (!s) return '';
+        return s.replace(/[&<>]/g, function(m) {
+            if (m === '&') return '&amp;';
+            if (m === '<') return '&lt;';
+            if (m === '>') return '&gt;';
+            return m;
+        });
+    }
+
+    function resetEditSearch() {
+        document.getElementById('editSearchProvince').value = '';
+        document.getElementById('editSearchProduct').value = '';
+        document.getElementById('editSearchType').value = '';
+        loadEditList();
+    }
+
+    // ================= 数据列表 =================
+    function loadDataList() {
+        const searchKeyword = document.getElementById('listSearchInput').value.toLowerCase();
+        let allRecords = [];
+        for (let prov in salesDB) {
+            for (let detail of salesDB[prov].details) {
+                allRecords.push({ prov: prov, detail: detail });
+            }
+        }
+        let filtered = allRecords;
+        if (searchKeyword) {
+            filtered = filtered.filter(r => r.prov.toLowerCase().includes(searchKeyword) || 
+                r.detail.company.toLowerCase().includes(searchKeyword) || 
+                r.detail.product.toLowerCase().includes(searchKeyword));
+        }
+        const resultInfo = document.getElementById('searchResultInfo');
+        if (resultInfo) {
+            resultInfo.innerHTML = searchKeyword ? `<i class="fas fa-search"></i> 搜索 "${escapeHtml(searchKeyword)}" 找到 ${filtered.length} 条记录` : `<i class="fas fa-database"></i> 共 ${filtered.length} 条业绩记录`;
+        }
+        if (filtered.length === 0) {
+            document.getElementById('dataList').innerHTML = '<div class="no-data"><i class="fas fa-search"></i> 没有找到匹配的记录</div>';
+            return;
+        }
+        let html = `<table class="data-table"><thead><tr><th>省份</th><th>客户</th><th>产品</th><th>数量</th><th>类型</th><th>现场图片</th><th>日期</th></tr></thead><tbody>`;
+        for (let r of filtered) {
+            html += `<tr>
+                        <td style="white-space:nowrap;">${escapeHtml(r.prov)}</td>
+                        <td style="max-width:150px; word-break:break-word;">${escapeHtml(r.detail.company)}</td>
+                        <td style="max-width:200px; word-break:break-word;">${escapeHtml(r.detail.product)}</td>
+                        <td style="text-align:center;">${r.detail.qty}</td>
+                        <td style="text-align:center;">${escapeHtml(r.detail.type)}</td>
+                        <td>${renderImagesCell(r.detail.images, r.prov, r.detail.id)}</td>
+                        <td style="text-align:center;">${r.detail.date || '-'}</td>
+                    </tr>`;
+        }
+        html += `</tbody>`;
+        document.getElementById('dataList').innerHTML = html;
+    }
+
+    function resetDataList() {
+        document.getElementById('listSearchInput').value = '';
+        loadDataList();
+    }
+
+    // ================= 导出/导入/清空 (已修复) =================
+    function exportToFile() {
+        const exportData = {};
+        for (let prov in salesDB) {
+            exportData[prov] = {
+                products: salesDB[prov].products,
+                companies: Array.from(salesDB[prov].companies),
+                details: salesDB[prov].details
+            };
+        }
+        const dataStr = JSON.stringify(exportData, null, 2);
+        const blob = new Blob([dataStr], {type: "application/json"});
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `ruize_sales_data_${new Date().toISOString().slice(0,19).replace(/:/g, '-')}.json`;
+        a.click();
+        URL.revokeObjectURL(url);
+        alert('✅ 数据已导出');
+    }
+
+    async function importFromFile() {
+        const fileInput = document.getElementById('importFile');
+        if (!fileInput.files || fileInput.files.length === 0) {
+            alert("请先选择备份文件");
+            return;
+        }
+        const file = fileInput.files[0];
+        const reader = new FileReader();
+        reader.onload = async (ev) => {
+            try {
+                const importedData = JSON.parse(ev.target.result);
+                if (typeof importedData !== 'object') throw new Error("文件格式不正确");
+                
+                let recordCount = 0, provinceCount = 0;
+                const newDB = {};
+                
+                for (let prov in importedData) {
+                    const provData = importedData[prov];
+                    if (provData && (provData.details || provData.products)) {
+                        provinceCount++;
+                        newDB[prov] = {
+                            products: provData.products || [],
+                            companies: new Set(provData.companies || []),
+                            details: provData.details || []
+                        };
+                        recordCount += newDB[prov].details.length;
+                    }
+                }
+                
+                if (provinceCount === 0) throw new Error("文件中没有有效的业绩数据");
+                
+                salesDB = newDB;
+                await saveData();
+                refreshAll();
+                loadEditList();
+                loadDataList();
+                alert(`✅ 导入成功！\n共导入 ${provinceCount} 个省份，${recordCount} 条业绩记录`);
+                fileInput.value = '';
+            } catch (err) {
+                alert("导入失败：" + err.message + "\n\n请确保选择的是正确的JSON备份文件");
+            }
+        };
+        reader.readAsText(file);
+    }
+
+    async function clearAllData() {
+        if (!isAdminLoggedIn()) { alert("请先登录管理员账号"); return; }
+        if (confirm("⚠️ 警告：此操作将删除所有业绩数据！\n确定要清空所有数据吗？\n\n建议先导出备份。")) {
+            salesDB = {};
+            await saveData();
+            refreshAll();
+            loadEditList();
+            loadDataList();
+            alert("✅ 所有数据已清空");
+        }
+    }
+
+    async function updateItem(province, id) {
+        const newQty = parseInt(document.getElementById(`qty_${id}`).value);
+        if (isNaN(newQty) || newQty < 0) { alert("请输入有效数量"); return; }
+        const detail = salesDB[province].details.find(d => d.id == id);
+        if (detail) {
+            detail.qty = newQty;
+            rebuildProvinceData(province);
+            await saveData();
+            refreshAll();
+            loadEditList();
+            alert("更新成功");
+        }
+    }
+
+    async function deleteItem(province, id) {
+        if (confirm("确定删除这条业绩记录吗？")) {
+            salesDB[province].details = salesDB[province].details.filter(d => d.id != id);
+            if (salesDB[province].details.length === 0) {
+                delete salesDB[province];
+            } else {
+                rebuildProvinceData(province);
+            }
+            await saveData();
+            refreshAll();
+            loadEditList();
+            loadDataList();
+            alert("删除成功");
+        }
+    }
+
+    // ================= UI 更新 =================
+    async function refreshAll() {
+        updateGlobalStats();
+        updateDetailPanel();
+        refreshMapMarkers();
+    }
+
+    function updateGlobalStats() {
+        const provinces = Object.keys(salesDB);
+        let totalQty = 0, totalCompanies = 0;
+        for (let prov of provinces) {
+            totalQty += salesDB[prov].products.reduce((s, p) => s + p.qty, 0);
+            totalCompanies += salesDB[prov].companies.size;
+        }
+        const statsDiv = document.getElementById("globalStats");
+        if (statsDiv) {
+            statsDiv.innerHTML = `
+                <div class="metric-row"><span><i class="fas fa-building"></i> 覆盖省份</span><span><strong>${provinces.length}</strong> 个</span></div>
+                <div class="metric-row"><span><i class="fas fa-users"></i> 客户总数</span><span><strong>${totalCompanies}</strong> 家</span></div>
+                <div class="metric-row"><span><i class="fas fa-boxes"></i> 设备总销量</span><span><strong>${totalQty.toLocaleString()}</strong> 台套</span></div>`;
+        }
+    }
+
+    function getFilteredDetails(province, filterType) {
+        if (!salesDB[province]) return [];
+        if (filterType === "all") return salesDB[province].details;
+        return salesDB[province].details.filter(d => d.type === filterType);
+    }
+
+    function updateDetailPanel() {
+        const details = getFilteredDetails(currentProvince, currentFilter);
+        const detailDiv = document.getElementById("dynamicDetail");
+        if (!details || details.length === 0) {
+            detailDiv.innerHTML = `<div style="padding:40px; text-align:center; color:#999;"><i class="fas fa-info-circle" style="font-size:2rem;"></i><p style="margin-top:12px;">${currentProvince} 暂无此类产品业绩</p></div>`;
+            return;
+        }
+        const totalQty = details.reduce((s, d) => s + d.qty, 0);
+        const uniqueCompanies = new Set(details.map(d => d.company));
+        let tableHtml = `<table class="detail-table"><thead><tr><th>客户名称</th><th>产品型号</th><th>数量(台)</th><th>产品类型</th><th>现场图片</th><th>录入日期</th></tr></thead><tbody>`;
+        details.forEach(d => {
+            tableHtml += `<tr>
+                <td style="max-width:150px; word-break:break-word;">${escapeHtml(d.company)}</td>
+                <td style="max-width:200px; word-break:break-word;">${escapeHtml(d.product)}</td>
+                <td style="text-align:center;">${d.qty}</td>
+                <td style="text-align:center;">${escapeHtml(d.type)}</td>
+                <td>${renderImagesCell(d.images, currentProvince, d.id)}</td>
+                <td style="text-align:center;">${d.date || '-'}</td>
+            </tr>`;
+        });
+        tableHtml += `</tbody>`;
+        detailDiv.innerHTML = `<div class="province-title"><i class="fas fa-location-dot"></i> ${currentProvince}<button class="back-btn" onclick="document.querySelector('.detail-card').scrollTop=0"><i class="fas fa-arrow-up"></i> 回到顶部</button></div>
+            <div class="metric-row"><span>📊 设备总销量</span><span><strong style="color:#0b5a7a;">${totalQty}</strong> 台套</span></div>
+            <div class="metric-row"><span>🏢 合作客户</span><span><strong>${uniqueCompanies.size}</strong> 家</span></div>
+            <div style="margin-top:16px; font-weight:600;">📋 业绩明细</div>
+            ${tableHtml}`;
+    }
+
+    window.showProvinceDetail = function(province) {
+        currentProvince = province;
+        updateDetailPanel();
+    };
+
+    function refreshMapMarkers() {
+        if (!map) return;
+        markers.forEach(m => map.removeOverlay(m));
+        markers = [];
+        const points = {
+            "北京市":[116.4074,39.9042], "天津市":[117.1902,39.1256], "上海市":[121.4737,31.2304],
+            "重庆市":[106.5044,29.5582], "河北省":[114.4995,38.1006], "山西省":[112.5624,37.8735],
+            "辽宁省":[123.4315,41.8057], "吉林省":[125.3245,43.8868], "黑龙江省":[126.6424,45.7567],
+            "江苏省":[118.7674,32.0415], "浙江省":[120.1536,30.2875], "安徽省":[117.2830,31.8612],
+            "福建省":[119.3062,26.0753], "江西省":[115.8922,28.6765], "山东省":[117.0009,36.6758],
+            "河南省":[113.6654,34.7570], "湖北省":[114.2986,30.5844], "湖南省":[112.9823,28.1941],
+            "广东省":[113.2644,23.1291], "广西壮族自治区":[108.3200,22.8240], "海南省":[110.3312,20.0320],
+            "四川省":[104.0657,30.6595], "贵州省":[106.7135,26.5783], "云南省":[102.7123,25.0406],
+            "西藏":[91.1409,29.6565], "陕西省":[108.9480,34.2632], "甘肃省":[103.8236,36.0580],
+            "青海省":[101.7800,36.6200], "宁夏回族自治区":[106.2782,38.4664], "新疆维吾尔自治区":[87.6168,43.8266],
+            "内蒙古自治区":[111.6708,40.8183]
+        };
+        let maxQty = 0;
+        for (let prov in salesDB) {
+            const total = salesDB[prov].products.reduce((s, p) => s + p.qty, 0);
+            if (total > maxQty) maxQty = total;
+        }
+        maxQty = Math.max(maxQty, 100);
+        for (let prov in salesDB) {
+            const coords = points[prov];
+            if (coords) {
+                const point = new BMap.Point(coords[0], coords[1]);
+                const totalQty = salesDB[prov].products.reduce((s, p) => s + p.qty, 0);
+                const companyCount = salesDB[prov].companies.size;
+                const marker = new BMap.Marker(point);
+                const infoWindow = new BMap.InfoWindow(
+                    `<div style="padding:8px;"><h4>📌 ${prov}</h4><p>销量: ${totalQty} 台套</p><p>客户: ${companyCount} 家</p><div style="color:#0b5a7a; cursor:pointer;" onclick="showProvinceDetail('${prov}'); map.closeInfoWindow();">🔍 查看详情</div></div>`,
+                    { width: 200, height: 120 }
+                );
+                marker.addEventListener("click", () => map.openInfoWindow(infoWindow, point));
+                map.addOverlay(marker);
+                markers.push(marker);
+                const radius = 8 + (totalQty / maxQty) * 25;
+                const circle = new BMap.Circle(point, Math.min(radius * 1000, 50000), {
+                    strokeColor: "#0b5a7a", strokeWeight: 1.5,
+                    fillColor: "#e67e22", fillOpacity: 0.4
+                });
+                map.addOverlay(circle);
+            }
+        }
+    }
+
+    function initBaiduMap() {
+        const mapDiv = document.getElementById("baiduMap");
+        if (mapDiv) mapDiv.innerHTML = '';
+        map = new BMap.Map("baiduMap");
+        map.centerAndZoom(new BMap.Point(105.0, 35.0), 5);
+        map.enableScrollWheelZoom(true);
+        map.addControl(new BMap.NavigationControl());
+        map.addControl(new BMap.ScaleControl());
+        refreshMapMarkers();
+        if (salesDB["广东省"]) currentProvince = "广东省";
+        else if (Object.keys(salesDB).length > 0) currentProvince = Object.keys(salesDB)[0];
+        updateDetailPanel();
+    }
+
+    // ================= 管理员后台 =================
+    const ADMIN_PASSWORD = "ruize";
+    function isAdminLoggedIn() { return sessionStorage.getItem('ruize_admin_logged_in') === 'true'; }
+    function setAdminLoggedIn(status) {
+        if (status) sessionStorage.setItem('ruize_admin_logged_in', 'true');
+        else sessionStorage.removeItem('ruize_admin_logged_in');
+        updateAdminUI();
+    }
+    function updateAdminUI() {
+        const btnText = document.getElementById('adminBtnText');
+        const badge = document.getElementById('adminStatusBadge');
+        if (isAdminLoggedIn()) {
+            if (btnText) btnText.innerHTML = '👑 管理员模式 <span class="logout-btn" onclick="event.stopPropagation(); logout();">退出</span>';
+            if (badge) badge.style.display = 'inline-block';
+        } else {
+            if (btnText) btnText.innerHTML = '管理员后台';
+            if (badge) badge.style.display = 'none';
+        }
+    }
+    function logout() { setAdminLoggedIn(false); closeAdminModal(); closeAdminLogin(); alert('已退出管理员模式'); }
+    function toggleAdminMode() { isAdminLoggedIn() ? openAdminModal() : openAdminLogin(); }
+    function openAdminLogin() { document.getElementById("adminLoginModal").classList.add("active"); document.getElementById("adminPassword").value = ""; document.getElementById("loginError").innerHTML = ""; }
+    function closeAdminLogin() { document.getElementById("adminLoginModal").classList.remove("active"); }
+    function checkAdminLogin() {
+        if (document.getElementById("adminPassword").value === ADMIN_PASSWORD) {
+            setAdminLoggedIn(true);
+            closeAdminLogin();
+            openAdminModal();
+        } else {
+            document.getElementById("loginError").innerHTML = "密码错误，请重试";
+        }
+    }
+    function openAdminModal() {
+        if (!isAdminLoggedIn()) { openAdminLogin(); return; }
+        document.getElementById("adminModal").classList.add("active");
+        loadEditList();
+        loadDataList();
+        renderTypeManageList();
+    }
+    function closeAdminModal() { document.getElementById("adminModal").classList.remove("active"); }
+    
+    function switchTab(tab) {
+        document.querySelectorAll('.tab-content').forEach(c => c.style.display = 'none');
+        const btns = document.querySelectorAll('.tab-btn');
+        btns.forEach(btn => btn.classList.remove('active'));
+        const tabMap = { add: 0, edit: 1, list: 2, dataManage: 3, typeManage: 4 };
+        const idx = tabMap[tab] || 0;
+        if (btns[idx]) btns[idx].classList.add('active');
+        document.getElementById(`${tab}Tab`).style.display = 'block';
+        if (tab === 'edit') loadEditList();
+        if (tab === 'list') loadDataList();
+        if (tab === 'typeManage') renderTypeManageList();
+    }
+
+    // 表单提交
+    document.getElementById('addForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        const province = document.getElementById('addProvince').value;
+        if (!province) { alert("请选择省份"); return; }
+        await addSale(
+            province,
+            document.getElementById('addProductName').value,
+            parseInt(document.getElementById('addQty').value),
+            document.getElementById('addCompany').value,
+            document.getElementById('addProductType').value
+        );
+        alert("添加成功");
+        this.reset();
+        closeAdminModal();
+    });
+
+    // 初始化省份下拉框
+    const provinces = ["北京市","天津市","上海市","重庆市","河北省","山西省","辽宁省","吉林省","黑龙江省","江苏省","浙江省","安徽省","福建省","江西省","山东省","河南省","湖北省","湖南省","广东省","广西壮族自治区","海南省","四川省","贵州省","云南省","西藏","陕西省","甘肃省","青海省","宁夏回族自治区","新疆维吾尔自治区","内蒙古自治区"];
+    const provSelect = document.getElementById('addProvince');
+    if (provSelect) provSelect.innerHTML = '<option value="">请选择省份</option>' + provinces.map(p => `<option value="${p}">${p}</option>`).join('');
+
+    // 启动
+    async function init() {
+        loadProductTypes();
+        await loadData();
+        updateGlobalStats();
+        initBaiduMap();
+        updateAdminUI();
+    }
+    init();
+</script>
+</body>
+</html>
